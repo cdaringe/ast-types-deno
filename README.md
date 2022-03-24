@@ -7,8 +7,7 @@ tree](http://en.wikipedia.org/wiki/Abstract_syntax_tree) type hierarchy
 pioneered by the [Mozilla Parser
 API](https://developer.mozilla.org/en-US/docs/SpiderMonkey/Parser_API).
 
-Installation
----
+## Installation
 
 From NPM:
 
@@ -21,29 +20,24 @@ From GitHub:
     cd ast-types
     npm install .
 
-Basic Usage
----
+## Basic Usage
+
 ```js
-import assert from "assert";
-import {
-  namedTypes as n,
-  builders as b,
-} from "ast-types";
+import assert from "assert.ts";
+import { namedTypes as n, builders as b } from "ast-types";
 
 var fooId = b.identifier("foo");
-var ifFoo = b.ifStatement(fooId, b.blockStatement([
-  b.expressionStatement(b.callExpression(fooId, []))
-]));
+var ifFoo = b.ifStatement(
+  fooId,
+  b.blockStatement([b.expressionStatement(b.callExpression(fooId, []))])
+);
 
 assert.ok(n.IfStatement.check(ifFoo));
 assert.ok(n.Statement.check(ifFoo));
 assert.ok(n.Node.check(ifFoo));
 
 assert.ok(n.BlockStatement.check(ifFoo.consequent));
-assert.strictEqual(
-  ifFoo.consequent.body[0].expression.arguments.length,
-  0,
-);
+assert.strictEqual(ifFoo.consequent.body[0].expression.arguments.length, 0);
 
 assert.strictEqual(ifFoo.test, fooId);
 assert.ok(n.Expression.check(ifFoo.test));
@@ -51,8 +45,7 @@ assert.ok(n.Identifier.check(ifFoo.test));
 assert.ok(!n.Statement.check(ifFoo.test));
 ```
 
-AST Traversal
----
+## AST Traversal
 
 Because it understands the AST type system so thoroughly, this library
 is able to provide excellent node iteration and traversal mechanisms.
@@ -61,11 +54,9 @@ If you want complete control over the traversal, and all you need is a way
 of enumerating the known fields of your AST nodes and getting their
 values, you may be interested in the primitives `getFieldNames` and
 `getFieldValue`:
+
 ```js
-import {
-  getFieldNames,
-  getFieldValue,
-} from "ast-types";
+import { getFieldNames, getFieldValue } from "ast-types";
 
 const partialFunExpr = { type: "FunctionExpression" };
 
@@ -83,13 +74,14 @@ console.log(getFieldValue(partialFunExpr, "generator"));
 
 Two more low-level helper functions, `eachField` and `someField`, are
 defined in terms of `getFieldNames` and `getFieldValue`:
+
 ```js
 // Iterate over all defined fields of an object, including those missing
 // or undefined, passing each field name and effective value (as returned
 // by getFieldValue) to the callback. If the object has no corresponding
 // Def, the callback will never be called.
 export function eachField(object, callback, context) {
-  getFieldNames(object).forEach(function(name) {
+  getFieldNames(object).forEach(function (name) {
     callback.call(this, name, getFieldValue(object, name));
   }, context);
 }
@@ -99,22 +91,23 @@ export function eachField(object, callback, context) {
 // result is either true or false to indicates whether the callback
 // returned true for any element or not.
 export function someField(object, callback, context) {
-  return getFieldNames(object).some(function(name) {
+  return getFieldNames(object).some(function (name) {
     return callback.call(this, name, getFieldValue(object, name));
   }, context);
 }
 ```
 
 So here's how you might make a copy of an AST node:
+
 ```js
-import { eachField } from "ast-types";
+import { eachField } from "ast-types.ts";
 const copy = {};
-eachField(node, function(name, value) {
+eachField(node, function (name, value) {
   // Note that undefined fields will be visited too, according to
   // the rules associated with node.type, and default field values
   // will be substituted if appropriate.
   copy[name] = value;
-})
+});
 ```
 
 But that's not all! You can also easily visit entire syntax trees using
@@ -122,12 +115,10 @@ the powerful `types.visit` abstraction.
 
 Here's a trivial example of how you might assert that `arguments.callee`
 is never used in `ast`:
+
 ```js
-import assert from "assert";
-import {
-  visit,
-  namedTypes as n,
-} from "ast-types";
+import assert from "assert.ts";
+import { visit, namedTypes as n } from "ast-types";
 
 visit(ast, {
   // This method will be called for any node with .type "MemberExpression":
@@ -150,7 +141,7 @@ visit(ast, {
     // indicate that the traversal need not continue any further down
     // this subtree.
     this.traverse(path);
-  }
+  },
 });
 ```
 
@@ -158,16 +149,12 @@ Here's a slightly more involved example of transforming `...rest`
 parameters into browser-runnable ES5 JavaScript:
 
 ```js
-import { builders as b, visit } from "ast-types";
+import { builders as b, visit } from "ast-types.ts";
 
 // Reuse the same AST structure for Array.prototype.slice.call.
 var sliceExpr = b.memberExpression(
   b.memberExpression(
-    b.memberExpression(
-      b.identifier("Array"),
-      b.identifier("prototype"),
-      false
-    ),
+    b.memberExpression(b.identifier("Array"), b.identifier("prototype"), false),
     b.identifier("slice"),
     false
   ),
@@ -221,9 +208,9 @@ visit(ast, {
         node.rest,
         b.callExpression(sliceExpr, [
           b.identifier("arguments"),
-          b.literal(node.params.length)
+          b.literal(node.params.length),
         ])
-      )
+      ),
     ]);
 
     // Similar to doing node.body.body.unshift(restVarDecl), except
@@ -238,7 +225,7 @@ visit(ast, {
     // There's nothing wrong with doing node.rest = null, but I wanted
     // to point out that the above statement has the same effect.
     assert.strictEqual(node.rest, null);
-  }
+  },
 });
 ```
 
@@ -287,21 +274,24 @@ function usesThis(funcNode) {
     // Yes, you can define arbitrary helper methods.
     isSuperCallExpression(callExpr) {
       n.CallExpression.assert(callExpr);
-      return this.isSuperIdentifier(callExpr.callee)
-          || this.isSuperMemberExpression(callExpr.callee);
+      return (
+        this.isSuperIdentifier(callExpr.callee) ||
+        this.isSuperMemberExpression(callExpr.callee)
+      );
     },
 
     // And even helper helper methods!
     isSuperIdentifier(node) {
-      return n.Identifier.check(node.callee)
-          && node.callee.name === "super";
+      return n.Identifier.check(node.callee) && node.callee.name === "super";
     },
 
     isSuperMemberExpression(node) {
-      return n.MemberExpression.check(node.callee)
-          && n.Identifier.check(node.callee.object)
-          && node.callee.object.name === "super";
-    }
+      return (
+        n.MemberExpression.check(node.callee) &&
+        n.Identifier.check(node.callee.object) &&
+        node.callee.object.name === "super"
+      );
+    },
   });
 
   return result;
@@ -315,8 +305,7 @@ request, simply catch the exception and call its `.cancel()` method. The
 rest of the subtree beneath the `try`-`catch` block will be abandoned, but
 the remaining siblings of the ancestor node will still be visited.
 
-NodePath
----
+## NodePath
 
 The `NodePath` object passed to visitor methods is a wrapper around an AST
 node, and it serves to provide access to the chain of ancestor objects
@@ -329,41 +318,44 @@ grandparent, and so on.
 Note that `path.node` may not be a direct property value of
 `path.parent.node`; for instance, it might be the case that `path.node` is
 an element of an array that is a direct child of the parent node:
+
 ```js
-path.node === path.parent.node.elements[3]
+path.node === path.parent.node.elements[3];
 ```
+
 in which case you should know that `path.parentPath` provides
 finer-grained access to the complete path of objects (not just the `Node`
 ones) from the root of the AST:
+
 ```js
 // In reality, path.parent is the grandparent of path:
-path.parentPath.parentPath === path.parent
+path.parentPath.parentPath === path.parent;
 
 // The path.parentPath object wraps the elements array (note that we use
 // .value because the elements array is not a Node):
-path.parentPath.value === path.parent.node.elements
+path.parentPath.value === path.parent.node.elements;
 
 // The path.node object is the fourth element in that array:
-path.parentPath.value[3] === path.node
+path.parentPath.value[3] === path.node;
 
 // Unlike path.node and path.value, which are synonyms because path.node
 // is a Node object, path.parentPath.node is distinct from
 // path.parentPath.value, because the elements array is not a
 // Node. Instead, path.parentPath.node refers to the closest ancestor
 // Node, which happens to be the same as path.parent.node:
-path.parentPath.node === path.parent.node
+path.parentPath.node === path.parent.node;
 
 // The path is named for its index in the elements array:
-path.name === 3
+path.name === 3;
 
 // Likewise, path.parentPath is named for the property by which
 // path.parent.node refers to it:
-path.parentPath.name === "elements"
+path.parentPath.name === "elements";
 
 // Putting it all together, we can follow the chain of object references
 // from path.parent.node all the way to path.node by accessing each
 // property by name:
-path.parent.node[path.parentPath.name][path.name] === path.node
+path.parent.node[path.parentPath.name][path.name] === path.node;
 ```
 
 These `NodePath` objects are created during the traversal without
@@ -374,17 +366,19 @@ each time it appears.
 
 Child `NodePath` objects are created lazily, by calling the `.get` method
 of a parent `NodePath` object:
+
 ```js
 // If a NodePath object for the elements array has never been created
 // before, it will be created here and cached in the future:
-path.get("elements").get(3).value === path.value.elements[3]
+path.get("elements").get(3).value === path.value.elements[3];
 
 // Alternatively, you can pass multiple property names to .get instead of
 // chaining multiple .get calls:
-path.get("elements", 0).value === path.value.elements[0]
+path.get("elements", 0).value === path.value.elements[0];
 ```
 
 `NodePath` objects support a number of useful methods:
+
 ```js
 // Replace one node with another node:
 var fifth = path.get("elements", 4);
@@ -395,10 +389,7 @@ fifth.replace(newNode);
 fifth.replace(newerNode);
 
 // Replace the third element in an array with two new nodes:
-path.get("elements", 2).replace(
-  b.identifier("foo"),
-  b.thisExpression()
-);
+path.get("elements", 2).replace(b.identifier("foo"), b.thisExpression());
 
 // Remove a node and its parent if it would leave a redundant AST node:
 //e.g. var t = 1, y =2; removing the `t` and `y` declarators results in `var undefined`.
@@ -428,8 +419,7 @@ seventh.insertAfter(newNode);
 path.get("elements").insertAt(5, newNode);
 ```
 
-Scope
----
+## Scope
 
 The object exposed as `path.scope` during AST traversals provides
 information about variable and function declarations in the scope that
@@ -437,19 +427,14 @@ contains `path.node`. See [scope.ts](lib/scope.ts) for its public
 interface, which currently includes `.isGlobal`, `.getGlobalScope()`,
 `.depth`, `.declares(name)`, `.lookup(name)`, and `.getBindings()`.
 
-Custom AST Node Types
----
+## Custom AST Node Types
 
 The `ast-types` module was designed to be extended. To that end, it
 provides a readable, declarative syntax for specifying new AST node types,
 based primarily upon the `require("ast-types").Type.def` function:
+
 ```js
-import {
-  Type,
-  builtInTypes,
-  builders as b,
-  finalize,
-} from "ast-types";
+import { Type, builtInTypes, builders as b, finalize } from "ast-types";
 
 const { def } = Type;
 const { string } = builtInTypes;
@@ -467,18 +452,21 @@ finalize();
 
 // The b.file builder function is now available. It expects two
 // arguments, as named by .build("name", "program") above.
-const main = b.file("main.js", b.program([
-  // Pointless program contents included for extra color.
-  b.functionDeclaration(b.identifier("succ"), [
-    b.identifier("x")
-  ], b.blockStatement([
-    b.returnStatement(
-      b.binaryExpression(
-        "+", b.identifier("x"), b.literal(1)
-      )
-    )
-  ]))
-]));
+const main = b.file(
+  "main.js",
+  b.program([
+    // Pointless program contents included for extra color.
+    b.functionDeclaration(
+      b.identifier("succ"),
+      [b.identifier("x")],
+      b.blockStatement([
+        b.returnStatement(
+          b.binaryExpression("+", b.identifier("x"), b.literal(1))
+        ),
+      ])
+    ),
+  ])
+);
 
 assert.strictEqual(main.name, "main.js");
 assert.strictEqual(main.program.body[0].params[0].name, "x");

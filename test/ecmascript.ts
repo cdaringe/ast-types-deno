@@ -1,10 +1,10 @@
-import assert from "assert";
-import { parse, Syntax } from "esprima";
-import * as espree from "espree";
-import * as esprimaFb from "esprima-fb";
-import { Literal } from "estree";
-import * as babelTypes from "@babel/types";
-import fork from "../fork";
+import assert from "assert.ts";
+import { parse, Syntax } from "esprima.ts";
+import * as espree from "espree.ts";
+import * as esprimaFb from "esprima-fb.ts";
+import { Literal } from "estree.ts";
+import * as babelTypes from "@babel/types.ts";
+import fork from "../fork.ts";
 import {
   Type,
   namedTypes as n,
@@ -26,17 +26,14 @@ import {
   validateECMAScript,
   isEarlyStageProposalType,
 } from "./shared";
-import typesPlugin from "../lib/types";
-import esprimaDef from "../def/esprima";
-import coreDef from "../def/core";
-import es6Def from "../def/es6";
-import es2020Def from "../def/es2020";
-import babelDef from "../def/babel";
+import typesPlugin from "../lib/types.ts";
+import esprimaDef from "../def/esprima.ts";
+import coreDef from "../def/core.ts";
+import es6Def from "../def/es6.ts";
+import es2020Def from "../def/es2020.ts";
+import babelDef from "../def/babel.ts";
 
-const {
-  RegExp: isRegExp,
-  string: isString,
-} = builtin;
+const { RegExp: isRegExp, string: isString } = builtin;
 
 var rawTypes = use(typesPlugin);
 
@@ -46,13 +43,14 @@ var nodeMajorVersion = parseInt(process.versions.node, 10);
 // Type alias to indicate when we're intentionally passing invalid types.
 type $InvalidType = any;
 
-describe("basic type checking", function() {
+describe("basic type checking", function () {
   var fooId = b.identifier("foo");
-  var ifFoo = b.ifStatement(fooId, b.blockStatement([
-    b.expressionStatement(b.callExpression(fooId, []))
-  ]));
+  var ifFoo = b.ifStatement(
+    fooId,
+    b.blockStatement([b.expressionStatement(b.callExpression(fooId, []))])
+  );
 
-  it("should exhibit sanity", function() {
+  it("should exhibit sanity", function () {
     assert.ok(n.IfStatement.check(ifFoo));
     assert.ok(n.Statement.check(ifFoo));
     assert.ok(n.Node.check(ifFoo));
@@ -78,7 +76,8 @@ describe("basic type checking", function() {
     assert.ok(!n.Statement.check(ifFoo.test));
     assert.equal(
       b.importDeclaration(
-        [b.importDefaultSpecifier(b.identifier("foo"))], b.literal("bar")
+        [b.importDefaultSpecifier(b.identifier("foo"))],
+        b.literal("bar")
       ).importKind,
       "value"
     );
@@ -87,25 +86,33 @@ describe("basic type checking", function() {
         [b.importDefaultSpecifier(b.identifier("foo"))],
         b.literal("bar"),
         "baz" as $InvalidType
-      )
+      );
     });
-    assert.ok(n.ImportDeclaration.check(
-      b.importDeclaration(
-        [b.importDefaultSpecifier(b.identifier("foo"))], b.literal("bar"),
-        "type")
-    ));
-    assert.ok(n.ImportDeclaration.check(
-      b.importDeclaration(
-        [b.importNamespaceSpecifier(b.identifier("foo"))], b.literal("bar"))
-    ));
+    assert.ok(
+      n.ImportDeclaration.check(
+        b.importDeclaration(
+          [b.importDefaultSpecifier(b.identifier("foo"))],
+          b.literal("bar"),
+          "type"
+        )
+      )
+    );
+    assert.ok(
+      n.ImportDeclaration.check(
+        b.importDeclaration(
+          [b.importNamespaceSpecifier(b.identifier("foo"))],
+          b.literal("bar")
+        )
+      )
+    );
   });
 });
 
-describe("builders", function() {
-  it("should build types using positional arguments", function() {
+describe("builders", function () {
+  it("should build types using positional arguments", function () {
     var fooId = b.identifier("foo");
     var consequent = b.blockStatement([
-      b.expressionStatement(b.callExpression(fooId, []))
+      b.expressionStatement(b.callExpression(fooId, [])),
     ]);
     var ifFoo = b.ifStatement(fooId, consequent);
 
@@ -121,21 +128,21 @@ describe("builders", function() {
     assert.strictEqual(ifFoo.alternate, null);
   });
 
-  it("should build types using `.from`", function() {
+  it("should build types using `.from`", function () {
     var fooId = b.identifier.from({
       name: "foo",
-      optional: true
+      optional: true,
     });
     var consequent = b.blockStatement.from({
       body: [
         b.expressionStatement.from({
-          expression: b.callExpression.from({ callee: fooId, arguments: [] })
-        })
-      ]
+          expression: b.callExpression.from({ callee: fooId, arguments: [] }),
+        }),
+      ],
     });
     var ifFoo = b.ifStatement.from({
       test: fooId,
-      consequent: consequent
+      consequent: consequent,
     });
 
     assert.ok(n.Identifier.check(fooId));
@@ -151,28 +158,27 @@ describe("builders", function() {
   });
 });
 
-describe("isSupertypeOf", function() {
-  it("should report correct supertype relationships", function() {
+describe("isSupertypeOf", function () {
+  it("should report correct supertype relationships", function () {
     var def = Type.def;
 
     assert.ok(def("Node").isSupertypeOf(def("Node")));
     assert.ok(def("Node").isSupertypeOf(def("Expression")));
     assert.ok(!def("Expression").isSupertypeOf(def("Node")));
-    assert.ok(!def("Expression").isSupertypeOf(
-      def("DebuggerStatement")));
+    assert.ok(!def("Expression").isSupertypeOf(def("DebuggerStatement")));
 
     // TODO Make this test case more exhaustive.
   });
 });
 
-describe("supertype lookup", function() {
-  it("should resolve the most precise supertypes", function() {
+describe("supertype lookup", function () {
+  it("should resolve the most precise supertypes", function () {
     var table = use(typesPlugin).computeSupertypeLookupTable({
       Function: true,
       Declaration: true,
       ArrowFunctionExpression: true,
       Expression: true,
-      Identifier: true
+      Identifier: true,
     });
 
     function check(subtype: string, expectedSupertype?: string) {
@@ -190,44 +196,43 @@ describe("supertype lookup", function() {
     check("Property");
   });
 
-  it("should properly linearize the inheritance hierarchy", function() {
-    assert.deepEqual(
-      getSupertypeNames("FunctionExpression"),
-      ["Function", "Expression", "Node", "Printable"]
-    );
+  it("should properly linearize the inheritance hierarchy", function () {
+    assert.deepEqual(getSupertypeNames("FunctionExpression"), [
+      "Function",
+      "Expression",
+      "Node",
+      "Printable",
+    ]);
   });
 
-  it("should trigger an AssertionError for unknown types", function() {
-    assert.throws(function() {
+  it("should trigger an AssertionError for unknown types", function () {
+    assert.throws(function () {
       getSupertypeNames("AlienBoomerangDeclaration");
     });
   });
 });
 
-describe("shallow and deep checks", function() {
+describe("shallow and deep checks", function () {
   var index = b.identifier("foo");
   var decl = b.variableDeclaration("var", [
-    b.variableDeclarator(
-      index,
-      b.literal(42)
-    )
+    b.variableDeclarator(index, b.literal(42)),
   ]);
 
-  it("should work when shallow", function() {
+  it("should work when shallow", function () {
     assert.ok(n.Node.check(decl));
     assert.ok(n.Statement.check(decl));
     assert.ok(n.Declaration.check(decl));
     assert.ok(n.VariableDeclaration.check(decl));
   });
 
-  it("should work when deep", function() {
+  it("should work when deep", function () {
     assert.ok(n.Node.check(decl, true));
     assert.ok(n.Statement.check(decl, true));
     assert.ok(n.Declaration.check(decl, true));
     assert.ok(n.VariableDeclaration.check(decl, true));
   });
 
-  it("should fail when expected", function() {
+  it("should fail when expected", function () {
     // Not an Expression.
     assert.ok(!n.Expression.check(decl));
 
@@ -254,14 +259,10 @@ describe("shallow and deep checks", function() {
     decl,
     b.binaryExpression("<", index, b.literal(48)),
     b.updateExpression("++", index, true),
-    b.blockStatement([
-      b.expressionStatement(
-        b.callExpression(index, [])
-      )
-    ])
+    b.blockStatement([b.expressionStatement(b.callExpression(index, []))])
   );
 
-  it("should disagree according to depth", function() {
+  it("should disagree according to depth", function () {
     assert.ok(n.Node.check(fs));
     assert.ok(n.Statement.check(fs));
     assert.ok(n.ForStatement.check(fs));
@@ -274,15 +275,14 @@ describe("shallow and deep checks", function() {
   });
 });
 
-
-describe("whole-program validation", function() {
+describe("whole-program validation", function () {
   this.timeout(20000);
 
   validateECMAScript("test/data/backbone.js");
   validateECMAScript("test/data/jquery-1.9.1.js");
 });
 
-describe("esprima Syntax types", function() {
+describe("esprima Syntax types", function () {
   const { def, hasDef } = Type;
   const typeNames: any = {};
 
@@ -297,215 +297,239 @@ describe("esprima Syntax types", function() {
   Object.keys(esprimaFb.Syntax).forEach(addTypeName);
   Object.keys((babelTypes as any).VISITOR_KEYS).forEach(addTypeName);
 
-  it("should all be buildable", function() {
-    Object.keys(typeNames).forEach(function(name) {
+  it("should all be buildable", function () {
+    Object.keys(typeNames).forEach(function (name) {
       assert.ok(hasOwn.call(n, name), name);
       assert.strictEqual(hasDef(name) && def(name).buildable, true, name);
     });
   });
 
-  it("builders for subtypes of Expression should have equivalent ExpressionStatement builders", function() {
-    Object.keys(typeNames).forEach(function(name) {
-      if (hasDef(name) && def(name).buildable &&
-          def("Expression").isSupertypeOf(def(name))) {
+  it("builders for subtypes of Expression should have equivalent ExpressionStatement builders", function () {
+    Object.keys(typeNames).forEach(function (name) {
+      if (
+        hasDef(name) &&
+        def(name).buildable &&
+        def("Expression").isSupertypeOf(def(name))
+      ) {
         var statementBuilderName = rawTypes.getStatementBuilderName(name);
-        assert.ok(b[statementBuilderName], name + ":" +statementBuilderName);
+        assert.ok(b[statementBuilderName], name + ":" + statementBuilderName);
       }
     });
 
     // sanity check
-    var expStmt = b.assignmentStatement("=", b.identifier("a"), b.identifier("b"));
+    var expStmt = b.assignmentStatement(
+      "=",
+      b.identifier("a"),
+      b.identifier("b")
+    );
     assert.strictEqual(expStmt.type, "ExpressionStatement");
   });
 });
 
-describe("types.getFieldValue", function() {
-  it("should work for explicit fields", function() {
+describe("types.getFieldValue", function () {
+  it("should work for explicit fields", function () {
     assert.strictEqual(
-      getFieldValue({
-        type: "CatchClause"
-      }, "type"),
+      getFieldValue(
+        {
+          type: "CatchClause",
+        },
+        "type"
+      ),
       "CatchClause"
     );
 
     assert.strictEqual(
-      getFieldValue({
-        type: "CatchClause",
-        guard: b.identifier("test")
-      }, "guard").name,
+      getFieldValue(
+        {
+          type: "CatchClause",
+          guard: b.identifier("test"),
+        },
+        "guard"
+      ).name,
       "test"
     );
   });
 
-  it("should work for implicit/default fields", function() {
+  it("should work for implicit/default fields", function () {
     assert.strictEqual(
-      getFieldValue({
-        type: "CatchClause"
-      }, "guard"),
+      getFieldValue(
+        {
+          type: "CatchClause",
+        },
+        "guard"
+      ),
       null
     );
 
     assert.strictEqual(
-      getFieldValue({
-        type: "CatchClause"
-      }, "asdf"),
+      getFieldValue(
+        {
+          type: "CatchClause",
+        },
+        "asdf"
+      ),
       void 0
     );
 
     assert.deepEqual(
-      getFieldValue({
-        type: "TryStatement",
-      }, "handler"),
+      getFieldValue(
+        {
+          type: "TryStatement",
+        },
+        "handler"
+      ),
       null
     );
 
     assert.deepEqual(
-      getFieldValue({
-        type: "TryStatement",
-      }, "handlers"),
+      getFieldValue(
+        {
+          type: "TryStatement",
+        },
+        "handlers"
+      ),
       []
     );
 
     assert.deepEqual(
-      getFieldValue({
-        type: "TryStatement",
-      }, "guardedHandlers"),
+      getFieldValue(
+        {
+          type: "TryStatement",
+        },
+        "guardedHandlers"
+      ),
       []
     );
   });
 
-  it("should work for explicitly undefined fields", function() {
+  it("should work for explicitly undefined fields", function () {
     assert.deepEqual(
-      getFieldValue({
-        type: "TryStatement",
-        guardedHandlers: void 0
-      }, "guardedHandlers"),
+      getFieldValue(
+        {
+          type: "TryStatement",
+          guardedHandlers: void 0,
+        },
+        "guardedHandlers"
+      ),
       []
     );
   });
 
-  it("should handle undefined objects", function() {
-    assert.equal(
-      getFieldValue(undefined, "name"),
-      undefined
-    );
+  it("should handle undefined objects", function () {
+    assert.equal(getFieldValue(undefined, "name"), undefined);
   });
 });
 
-describe("types.eachField", function() {
+describe("types.eachField", function () {
   var context = {};
 
   function check(node: any, names: any) {
     var seen: any[] = [];
 
-    eachField(node, function(this: any, name: any, value: any) {
-      assert.strictEqual(this, context);
-      if (name === "type")
-        assert.strictEqual(node.type, value);
-      seen.push(name);
-    }, context);
+    eachField(
+      node,
+      function (this: any, name: any, value: any) {
+        assert.strictEqual(this, context);
+        if (name === "type") assert.strictEqual(node.type, value);
+        seen.push(name);
+      },
+      context
+    );
 
     assert.deepEqual(seen.sort(), names.sort());
   }
 
-  it("should give correct keys for supertypes", function() {
+  it("should give correct keys for supertypes", function () {
     check({ type: "Expression" }, ["type"]);
   });
 
-  it("should work for non-buildable types", function() {
-    check({ type: "Position" }, [
-      "line", "column"
-    ]);
+  it("should work for non-buildable types", function () {
+    check({ type: "Position" }, ["line", "column"]);
 
-    check({ type: "SourceLocation" }, [
-      "start", "end", "source"
-    ]);
+    check({ type: "SourceLocation" }, ["start", "end", "source"]);
   });
 
-  it("should respect hidden fields", function() {
+  it("should respect hidden fields", function () {
     check({ type: "TryStatement" }, [
       // Note that the "handlers" field is now hidden from eachField.
-      "type", "block", "handler", "guardedHandlers", "finalizer"
+      "type",
+      "block",
+      "handler",
+      "guardedHandlers",
+      "finalizer",
     ]);
   });
 
-  check({ type: "CatchClause" }, [
-    "type", "param", "guard", "body"
-  ]);
+  check({ type: "CatchClause" }, ["type", "param", "guard", "body"]);
 
-  it("should complain about invalid types", function() {
+  it("should complain about invalid types", function () {
     try {
       check({ type: "asdf" }, ["type"]);
       throw new Error("should have thrown");
     } catch (e) {
-      assert.strictEqual(
-        e.message,
-        'did not recognize object of type "asdf"'
-      );
+      assert.strictEqual(e.message, 'did not recognize object of type "asdf"');
     }
   });
 
-  it("should infer SourceLocation types", function() {
-    check({
-      line: 10,
-      column: 37
-    }, ["line", "column"]);
+  it("should infer SourceLocation types", function () {
+    check(
+      {
+        line: 10,
+        column: 37,
+      },
+      ["line", "column"]
+    );
   });
 });
 
-describe("types.visit", function() {
+describe("types.visit", function () {
   var call = b.expressionStatement(
     b.callExpression(
-      b.memberExpression(
-        b.identifier("foo"),
-        b.identifier("bar"),
-        false
-      ),
+      b.memberExpression(b.identifier("foo"), b.identifier("bar"), false),
       [b.literal("baz")]
     )
   );
 
   var ts = b.tryStatement(
     b.blockStatement([call, call]),
-    b.catchClause(
-      b.identifier("err"),
-      null,
-      b.blockStatement([])
-    )
+    b.catchClause(b.identifier("err"), null, b.blockStatement([]))
   );
 
-  it("should have correct .parent path", function() {
+  it("should have correct .parent path", function () {
     var literalCount = 0;
 
-    n.TryStatement.assert(visit(ts, {
-      visitLiteral: function(path) {
-        var node = path.node;
-        literalCount += 1;
-        assert.strictEqual(node.value, "baz");
-        assert.strictEqual(path.parent.node, call.expression);
-        assert.strictEqual(path.parent.parent.node, call);
-        assert.strictEqual(path.parent.parent.parent.node, ts.block);
-        assert.strictEqual(path.parent.parent.parent.parent.node, ts);
-        assert.strictEqual(path.parent.parent.parent.parent.parent, null);
-        this.traverse(path);
-      }
-    }), true);
+    n.TryStatement.assert(
+      visit(ts, {
+        visitLiteral: function (path) {
+          var node = path.node;
+          literalCount += 1;
+          assert.strictEqual(node.value, "baz");
+          assert.strictEqual(path.parent.node, call.expression);
+          assert.strictEqual(path.parent.parent.node, call);
+          assert.strictEqual(path.parent.parent.parent.node, ts.block);
+          assert.strictEqual(path.parent.parent.parent.parent.node, ts);
+          assert.strictEqual(path.parent.parent.parent.parent.parent, null);
+          this.traverse(path);
+        },
+      }),
+      true
+    );
 
     assert.strictEqual(literalCount, 2);
   });
 
-  it("should abort subtree traversal when false returned", function() {
+  it("should abort subtree traversal when false returned", function () {
     var ids: any = {};
 
     visit(ts, {
-      visitMemberExpression: function(_path: any) {
+      visitMemberExpression: function (_path: any) {
         return false;
       },
 
-      visitIdentifier: function(path) {
+      visitIdentifier: function (path) {
         ids[path.node.name] = true;
         this.traverse(path);
-      }
+      },
     });
 
     // Make sure all identifers beneath member expressions were skipped.
@@ -514,39 +538,39 @@ describe("types.visit", function() {
     ids = {};
 
     visit(ts, {
-      visitIdentifier: function(path) {
+      visitIdentifier: function (path) {
         ids[path.node.name] = true;
         this.traverse(path);
-      }
+      },
     });
 
     // Now make sure those identifiers (foo and bar) were visited.
     assert.deepEqual(ids, {
       err: true,
       foo: true,
-      bar: true
+      bar: true,
     });
   });
 
-  it("this.abort() should abort entire traversal", function() {
+  it("this.abort() should abort entire traversal", function () {
     var literal = "not visited";
     var unvisitedTypes: any[] = [];
     var root = visit(call, {
-      visitIdentifier: function(path) {
+      visitIdentifier: function (path) {
         if (path.value.name === "foo") {
           this.abort();
         }
       },
 
-      visitLiteral: function(path) {
+      visitLiteral: function (path) {
         literal = path.value;
         this.traverse(path);
       },
 
-      visitNode: function(path) {
+      visitNode: function (path) {
         unvisitedTypes.push(path.value.type);
         this.traverse(path);
-      }
+      },
     });
 
     assert.strictEqual(root, call);
@@ -554,21 +578,21 @@ describe("types.visit", function() {
     assert.deepEqual(unvisitedTypes, [
       "ExpressionStatement",
       "CallExpression",
-      "MemberExpression"
+      "MemberExpression",
     ]);
   });
 
-  it("this.abort() should be cancelable", function() {
+  it("this.abort() should be cancelable", function () {
     var literal: any = "not visited";
     var unvisitedTypes: any[] = [];
     var root = visit(call, {
-      visitIdentifier: function(path) {
+      visitIdentifier: function (path) {
         if (path.value.name === "foo") {
           this.abort();
         }
       },
 
-      visitMemberExpression: function(path) {
+      visitMemberExpression: function (path) {
         try {
           this.traverse(path);
         } catch (err) {
@@ -577,15 +601,15 @@ describe("types.visit", function() {
         }
       },
 
-      visitLiteral: function(path) {
+      visitLiteral: function (path) {
         literal = path.value;
         this.traverse(path);
       },
 
-      visitNode: function(path) {
+      visitNode: function (path) {
         unvisitedTypes.push(path.value.type);
         this.traverse(path);
-      }
+      },
     });
 
     assert.strictEqual(root, call);
@@ -600,54 +624,54 @@ describe("types.visit", function() {
 
     assert.deepEqual(unvisitedTypes, [
       "ExpressionStatement",
-      "CallExpression"
+      "CallExpression",
       // Note that the MemberExpression and the Literal were visited
       // by their type-specific methods, so they were not visited by
       // the catch-all visitNode method.
     ]);
   });
 
-  it("should visit comments", function() {
-    var ast = parse([
-      "function getArgs(/*arguments*/) {",
-      "  // Turn arguments into an array.",
-      "  return Array.prototype.slice.call(arguments);",
-      "}"
-    ].join("\n"), {
-      comment: true
-    });
+  it("should visit comments", function () {
+    var ast = parse(
+      [
+        "function getArgs(/*arguments*/) {",
+        "  // Turn arguments into an array.",
+        "  return Array.prototype.slice.call(arguments);",
+        "}",
+      ].join("\n"),
+      {
+        comment: true,
+      }
+    );
 
     var blockComments: any[] = [];
     var lineComments: any[] = [];
 
     visit(ast, {
-      visitComment: function(path) {
+      visitComment: function (path) {
         this.traverse(path);
         if (n.Block.check(path.value)) {
           blockComments.push(path.value);
         } else if (n.Line.check(path.value)) {
           lineComments.push(path.value);
         }
-      }
+      },
     });
 
     assert.strictEqual(blockComments.length, 1);
     assert.strictEqual(blockComments[0].value, "arguments");
 
     assert.strictEqual(lineComments.length, 1);
-    assert.strictEqual(
-      lineComments[0].value,
-      " Turn arguments into an array."
-    );
+    assert.strictEqual(lineComments[0].value, " Turn arguments into an array.");
 
     blockComments.length = 0;
     lineComments.length = 0;
 
     visit(ast, {
-      visitBlock: function(path) {
+      visitBlock: function (path) {
         blockComments.push(path.value);
         this.traverse(path);
-      }
+      },
     });
 
     assert.strictEqual(blockComments.length, 1);
@@ -659,66 +683,56 @@ describe("types.visit", function() {
     lineComments.length = 0;
 
     visit(ast, {
-      visitLine: function(path) {
+      visitLine: function (path) {
         lineComments.push(path.value);
         this.traverse(path);
-      }
+      },
     });
 
     assert.strictEqual(blockComments.length, 0);
 
     assert.strictEqual(lineComments.length, 1);
-    assert.strictEqual(
-      lineComments[0].value,
-      " Turn arguments into an array."
-    );
+    assert.strictEqual(lineComments[0].value, " Turn arguments into an array.");
 
     blockComments.length = 0;
     lineComments.length = 0;
 
     visit(ast, {
-      visitBlock: function(path) {
+      visitBlock: function (path) {
         blockComments.push(path.value);
         this.traverse(path);
       },
 
-      visitLine: function(path) {
+      visitLine: function (path) {
         lineComments.push(path.value);
         this.traverse(path);
-      }
+      },
     });
 
     assert.strictEqual(blockComments.length, 1);
     assert.strictEqual(blockComments[0].value, "arguments");
 
     assert.strictEqual(lineComments.length, 1);
-    assert.strictEqual(
-      lineComments[0].value,
-      " Turn arguments into an array."
-    );
+    assert.strictEqual(lineComments[0].value, " Turn arguments into an array.");
   });
 });
 
-describe("path traversal", function() {
+describe("path traversal", function () {
   var call = b.expressionStatement(
     b.callExpression(
-      b.memberExpression(
-        b.identifier("foo"),
-        b.identifier("bar"),
-        false
-      ),
+      b.memberExpression(b.identifier("foo"), b.identifier("bar"), false),
       [b.literal("baz")]
     )
   );
 
-  it("should accept root paths as well as AST nodes", function() {
+  it("should accept root paths as well as AST nodes", function () {
     var path = new NodePath(call).get("expression", "callee");
     var idCount = 0;
 
     // Note that we're passing a path instead of a node as the first
     // argument to types.traverse.
     visit(path, {
-      visitIdentifier: function(path) {
+      visitIdentifier: function (path) {
         var node = path.node;
         ++idCount;
 
@@ -729,39 +743,42 @@ describe("path traversal", function() {
         }
 
         this.traverse(path);
-      }
+      },
     });
 
     assert.strictEqual(idCount, 2);
   });
 });
 
-describe("replacing the root", function() {
+describe("replacing the root", function () {
   var ast = b.expressionStatement(
-    b.unaryExpression("!", b.sequenceExpression([
-      b.identifier("a"),
-      b.identifier("b"),
-      b.identifier("c")
-    ]))
+    b.unaryExpression(
+      "!",
+      b.sequenceExpression([
+        b.identifier("a"),
+        b.identifier("b"),
+        b.identifier("c"),
+      ])
+    )
   );
 
-  it("should be possible", function() {
+  it("should be possible", function () {
     var callExp = visit(ast, {
-      visitExpressionStatement: function(path) {
-        path.replace(b.callExpression(b.identifier("f"), [
-          path.node.expression
-        ]));
+      visitExpressionStatement: function (path) {
+        path.replace(
+          b.callExpression(b.identifier("f"), [path.node.expression])
+        );
 
         this.traverse(path);
-      }
+      },
     });
 
     n.CallExpression.assert(callExp, true);
   });
 });
 
-describe("NodePath", function() {
-  it("should have the expected type hierarchy", function() {
+describe("NodePath", function () {
+  it("should have the expected type hierarchy", function () {
     assert.strictEqual(new Path({}).constructor, Path);
 
     var np = new NodePath(b.identifier("foo"));
@@ -770,16 +787,19 @@ describe("NodePath", function() {
   });
 
   var ast = b.expressionStatement(
-    b.unaryExpression("!", b.sequenceExpression([
-      b.identifier("a"),
-      b.identifier("b"),
-      b.identifier("c")
-    ]))
+    b.unaryExpression(
+      "!",
+      b.sequenceExpression([
+        b.identifier("a"),
+        b.identifier("b"),
+        b.identifier("c"),
+      ])
+    )
   );
 
   var path = new NodePath(ast);
 
-  it("should have sane values, nodes, parents", function() {
+  it("should have sane values, nodes, parents", function () {
     var opPath = path.get("expression", "operator");
     assert.strictEqual(opPath.value, "!");
     assert.strictEqual(opPath.node, ast.expression);
@@ -795,7 +815,7 @@ describe("NodePath", function() {
     )
   );
 
-  it("should support .needsParens()", function() {
+  it("should support .needsParens()", function () {
     var argPath = path.get("expression", "argument");
     assert.ok(argPath.needsParens());
 
@@ -810,8 +830,8 @@ describe("NodePath", function() {
     assert.ok(byPath.get("expression", "right").needsParens());
 
     var sequenceAssignmentAST = b.assignmentExpression(
-      '=',
-      b.identifier('a'),
+      "=",
+      b.identifier("a"),
       b.sequenceExpression([b.literal(1), b.literal(2)])
     );
 
@@ -819,7 +839,7 @@ describe("NodePath", function() {
     assert.ok(sequenceAssignmentPath.get("right").needsParens());
   });
 
-  it("should support .needsParens(true)", function() {
+  it("should support .needsParens(true)", function () {
     var programPath = new NodePath(parse("(function(){})"));
     var funExpPath = programPath.get("body", 0, "expression");
     n.FunctionExpression.assert(funExpPath.value);
@@ -837,9 +857,14 @@ describe("NodePath", function() {
     assert.strictEqual(objLitPath.needsParens(true), false);
   });
 
-  it("should prune redundant variable declaration nodes", function() {
+  it("should prune redundant variable declaration nodes", function () {
     var programPath = new NodePath(parse("(function(){var y = 1,x = 2;})"));
-    var funBlockStatementPath = programPath.get("body", 0, "expression", "body");
+    var funBlockStatementPath = programPath.get(
+      "body",
+      0,
+      "expression",
+      "body"
+    );
     var variableDeclaration = funBlockStatementPath.get("body", 0);
     var yVariableDeclaratorPath = variableDeclaration.get("declarations", 0);
     var xVariableDeclaratorPath = variableDeclaration.get("declarations", 1);
@@ -857,10 +882,19 @@ describe("NodePath", function() {
     assert.strictEqual(funBlockStatementPath.get("body", 0).value, undefined);
   });
 
-  it("should prune redundant expression statement nodes", function() {
+  it("should prune redundant expression statement nodes", function () {
     var programPath = new NodePath(parse("(function(){key = 'value';})"));
-    var funBlockStatementPath = programPath.get("body", 0, "expression", "body");
-    var assignmentExpressionPath = funBlockStatementPath.get("body", 0, "expression");
+    var funBlockStatementPath = programPath.get(
+      "body",
+      0,
+      "expression",
+      "body"
+    );
+    var assignmentExpressionPath = funBlockStatementPath.get(
+      "body",
+      0,
+      "expression"
+    );
 
     n.AssignmentExpression.assert(assignmentExpressionPath.node);
 
@@ -870,7 +904,7 @@ describe("NodePath", function() {
     assert.strictEqual(funBlockStatementPath.value.body.length, 0);
   });
 
-  it("should prune redundant if statement node if no consequent and alternate remain after prune", function() {
+  it("should prune redundant if statement node if no consequent and alternate remain after prune", function () {
     var programPath = new NodePath(parse("if(true){var t = 0;}"));
     var consequentNodePath = programPath.get("body", 0, "consequent");
 
@@ -884,8 +918,10 @@ describe("NodePath", function() {
     assert.strictEqual(remainingNodePath, testExpressionNodePath);
   });
 
-  it("should modify if statement node if consequent is pruned and alternate remains", function() {
-    var programPath = new NodePath(parse("if(x > 10){var t = 0;}else{var f = 2;}"));
+  it("should modify if statement node if consequent is pruned and alternate remains", function () {
+    var programPath = new NodePath(
+      parse("if(x > 10){var t = 0;}else{var f = 2;}")
+    );
     var consequentNodePath = programPath.get("body", 0, "consequent");
 
     n.BlockStatement.assert(consequentNodePath.node);
@@ -901,8 +937,10 @@ describe("NodePath", function() {
     assert.strictEqual(negatedTestExpression.node.operator, "!");
   });
 
-  it("should modify if statement node if consequent is pruned, alternate remains with no double negation", function() {
-    var programPath = new NodePath(parse("if(!condition){var t = 0;}else{var f = 2;}"));
+  it("should modify if statement node if consequent is pruned, alternate remains with no double negation", function () {
+    var programPath = new NodePath(
+      parse("if(!condition){var t = 0;}else{var f = 2;}")
+    );
     var consequentNodePath = programPath.get("body", 0, "consequent");
 
     n.BlockStatement.assert(consequentNodePath.node);
@@ -918,61 +956,60 @@ describe("NodePath", function() {
   });
 });
 
-describe("path.replace", function() {
+describe("path.replace", function () {
   var ast: any;
 
-  beforeEach(function() {
+  beforeEach(function () {
     ast = b.functionDeclaration(
       b.identifier("fn"),
       [],
       b.blockStatement([
-        b.variableDeclaration(
-          "var",
-          [b.variableDeclarator(b.identifier("a"), null)]
-        )
+        b.variableDeclaration("var", [
+          b.variableDeclarator(b.identifier("a"), null),
+        ]),
       ])
     );
   });
 
-  it("should support replacement with a single node", function() {
+  it("should support replacement with a single node", function () {
     visit(ast, {
-      visitIdentifier: function(path) {
+      visitIdentifier: function (path) {
         if (path.node.name === "a") {
           path.replace(b.identifier("b"));
         }
         this.traverse(path);
-      }
+      },
     });
 
     assert.equal(ast.body.body[0].declarations[0].id.name, "b");
   });
 
-  it("should support replacement in an array with a single node", function() {
+  it("should support replacement in an array with a single node", function () {
     visit(ast, {
-      visitVariableDeclaration: function(path) {
+      visitVariableDeclaration: function (path) {
         path.replace(b.returnStatement(null));
         this.traverse(path);
-      }
+      },
     });
 
     assert.equal(ast.body.body.length, 1);
     assert.ok(n.ReturnStatement.check(ast.body.body[0]));
   });
 
-  it("should support replacement with nothing", function() {
+  it("should support replacement with nothing", function () {
     visit(ast, {
-      visitVariableDeclaration: function(path) {
+      visitVariableDeclaration: function (path) {
         path.replace();
         this.traverse(path);
-      }
+      },
     });
 
     assert.equal(ast.body.body.length, 0);
   });
 
-  it("should support replacement with itself plus more in an array", function() {
+  it("should support replacement with itself plus more in an array", function () {
     visit(ast, {
-      visitVariableDeclaration: function(path) {
+      visitVariableDeclaration: function (path) {
         var scopeBody = path.scope.path.get("body", "body");
 
         // This is contrived such that we just happen to be replacing
@@ -983,35 +1020,39 @@ describe("path.replace", function() {
         // Prepend `var $$;` inside the block. This should update our
         // `this` NodePath to correct its array index so that a
         // subsequent replace will still work.
-        scopeBody.get(0).replace(
-          b.variableDeclaration(
-            "var",
-            [b.variableDeclarator(b.identifier("$$"), null)]
-          ),
-          scopeBody.get(0).value
-        );
+        scopeBody
+          .get(0)
+          .replace(
+            b.variableDeclaration("var", [
+              b.variableDeclarator(b.identifier("$$"), null),
+            ]),
+            scopeBody.get(0).value
+          );
 
         // Now do it again to make sure all the other indexes are
         // updated, too.
-        scopeBody.get(0).replace(
-          b.variableDeclaration(
-            "var",
-            [b.variableDeclarator(b.identifier("$2"), null)]
-          ),
-          scopeBody.get(0).value
-        );
+        scopeBody
+          .get(0)
+          .replace(
+            b.variableDeclaration("var", [
+              b.variableDeclarator(b.identifier("$2"), null),
+            ]),
+            scopeBody.get(0).value
+          );
 
         assert.strictEqual(scopeBody.get(0), path);
 
         // Then replace the node, not the one we just added.
         return b.returnStatement(b.identifier("$3"));
-      }
+      },
     });
 
     var statements = ast.body.body;
     assert.deepEqual(
-      statements.map(function(node: any) { return node.type; }),
-      ['ReturnStatement', 'VariableDeclaration', 'VariableDeclaration']
+      statements.map(function (node: any) {
+        return node.type;
+      }),
+      ["ReturnStatement", "VariableDeclaration", "VariableDeclaration"]
     );
 
     n.ReturnStatement.assert(statements[0]);
@@ -1024,9 +1065,9 @@ describe("path.replace", function() {
     assert.equal(statements[2].declarations[0].id.name, "a");
   });
 
-  it("should not throw when replacing the same node twice", function() {
+  it("should not throw when replacing the same node twice", function () {
     visit(ast, {
-      visitVariableDeclaration: function(path) {
+      visitVariableDeclaration: function (path) {
         path.replace(b.expressionStatement(b.literal(null)));
         n.ExpressionStatement.assert(path.value);
         n.Literal.assert(path.value.expression);
@@ -1042,32 +1083,32 @@ describe("path.replace", function() {
         }
 
         this.traverse(path);
-      }
+      },
     });
   });
 });
 
-describe("global scope", function() {
+describe("global scope", function () {
   var scope = [
     "var foo = 42;",
     "function bar(baz) {",
     "  return baz + foo;",
-    "}"
+    "}",
   ];
 
   var ast = parse(scope.join("\n"));
 
-  it("should be reachable from nested scopes", function() {
+  it("should be reachable from nested scopes", function () {
     var globalScope: any;
 
     visit(ast, {
-      visitProgram: function(path) {
+      visitProgram: function (path) {
         assert.strictEqual(path.scope.isGlobal, true);
         globalScope = path.scope;
         this.traverse(path);
       },
 
-      visitFunctionDeclaration: function(path) {
+      visitFunctionDeclaration: function (path) {
         var node = path.node;
         assert.strictEqual(path.scope.isGlobal, false);
 
@@ -1080,21 +1121,21 @@ describe("global scope", function() {
         assert.strictEqual(path.scope.getGlobalScope(), globalScope);
 
         this.traverse(path);
-      }
+      },
     });
   });
 
-  it("should be found by .lookup and .declares", function() {
+  it("should be found by .lookup and .declares", function () {
     var globalScope: any;
 
     visit(ast, {
-      visitProgram: function(path) {
+      visitProgram: function (path) {
         assert.strictEqual(path.scope.isGlobal, true);
         globalScope = path.scope;
         this.traverse(path);
       },
 
-      visitFunctionDeclaration: function(path) {
+      visitFunctionDeclaration: function (path) {
         assert.ok(globalScope.declares("foo"));
         assert.ok(globalScope.declares("bar"));
         assert.strictEqual(path.scope.lookup("foo"), globalScope);
@@ -1107,7 +1148,7 @@ describe("global scope", function() {
         assert.strictEqual(globalScope.lookup("baz"), null);
 
         this.traverse(path);
-      }
+      },
     });
   });
 });
@@ -1121,15 +1162,15 @@ describe("scope methods", function () {
     "var nom = function rom(pom) {",
     "  var zom;",
     "  return rom(pom);",
-    "};"
+    "};",
   ];
 
-  it("getBindings should get local and global scope bindings", function() {
+  it("getBindings should get local and global scope bindings", function () {
     var ast = parse(scope.join("\n"));
     var checked: any[] = [];
 
     visit(ast, {
-      visitProgram: function(path) {
+      visitProgram: function (path) {
         var bindings = path.scope.getBindings();
         assert.deepEqual(["bar", "foo", "nom"], Object.keys(bindings).sort());
         assert.equal(1, bindings.foo.length);
@@ -1138,7 +1179,7 @@ describe("scope methods", function () {
         this.traverse(path);
       },
 
-      visitFunctionDeclaration: function(path) {
+      visitFunctionDeclaration: function (path) {
         var bindings = path.scope.getBindings();
         assert.deepEqual(["baz"], Object.keys(bindings));
         assert.equal(1, bindings.baz.length);
@@ -1146,141 +1187,156 @@ describe("scope methods", function () {
         this.traverse(path);
       },
 
-      visitReturnStatement: function(path) {
+      visitReturnStatement: function (path) {
         var node = path.node;
-        if (n.CallExpression.check(node.argument) &&
-            n.Identifier.check(node.argument.callee) &&
-            node.argument.callee.name === "rom") {
+        if (
+          n.CallExpression.check(node.argument) &&
+          n.Identifier.check(node.argument.callee) &&
+          node.argument.callee.name === "rom"
+        ) {
           var bindings = path.scope.getBindings();
           assert.deepEqual(["pom", "rom", "zom"], Object.keys(bindings).sort());
           checked.push(node);
         }
         this.traverse(path);
-      }
+      },
     });
 
     assert.deepEqual(
-      checked.map(function(node) { return node.type; }),
-      ['Program', 'FunctionDeclaration', 'ReturnStatement']
+      checked.map(function (node) {
+        return node.type;
+      }),
+      ["Program", "FunctionDeclaration", "ReturnStatement"]
     );
   });
 
-  it("getBindings should work for import statements (esprima-fb)", function() {
+  it("getBindings should work for import statements (esprima-fb)", function () {
     var ast = esprimaFb.parse(
       [
         "import {x, y as z} from 'xy';",
         "import xyDefault from 'xy';",
-        "import * as xyNamespace from 'xy';"
+        "import * as xyNamespace from 'xy';",
       ].join("\n"),
-      {sourceType: "module"}
+      { sourceType: "module" }
     );
 
     var names;
 
     visit(ast, {
-      visitProgram: function(path) {
+      visitProgram: function (path) {
         names = Object.keys(path.scope.getBindings()).sort();
         this.traverse(path);
-      }
+      },
     });
 
     assert.deepEqual(names, ["x", "xyDefault", "xyNamespace", "z"]);
   });
 
-  it("getBindings should work for import statements (acorn)", function() {
-    var ast = babylonParse([
-      "import {x, y as z} from 'xy';",
-      "import xyDefault from 'xy';",
-      "import * as xyNamespace from 'xy';"
-    ].join("\n"), {
-      sourceType: "module",
-      ecmaVersion: 6
-    });
+  it("getBindings should work for import statements (acorn)", function () {
+    var ast = babylonParse(
+      [
+        "import {x, y as z} from 'xy';",
+        "import xyDefault from 'xy';",
+        "import * as xyNamespace from 'xy';",
+      ].join("\n"),
+      {
+        sourceType: "module",
+        ecmaVersion: 6,
+      }
+    );
 
     var names;
 
     visit(ast, {
-      visitProgram: function(path) {
+      visitProgram: function (path) {
         names = Object.keys(path.scope.getBindings()).sort();
         this.traverse(path);
-      }
+      },
     });
 
     assert.deepEqual(names, ["x", "xyDefault", "xyNamespace", "z"]);
   });
 
-  (nodeMajorVersion >= 6 ? it : xit)
-  ("should work for ES6 syntax (espree)", function() {
-    var names;
+  (nodeMajorVersion >= 6 ? it : xit)(
+    "should work for ES6 syntax (espree)",
+    function () {
+      var names;
 
-    var ast = espree.parse([
-      "var zap;",
-      "export default function(zom) {",
-      "    var innerFn = function(zip) {};",
-      "    return innerFn(zom);",
-      "};"
-    ].join("\n"), {
-      sourceType: "module",
-      ecmaVersion: 2020,
-    });
+      var ast = espree.parse(
+        [
+          "var zap;",
+          "export default function(zom) {",
+          "    var innerFn = function(zip) {};",
+          "    return innerFn(zom);",
+          "};",
+        ].join("\n"),
+        {
+          sourceType: "module",
+          ecmaVersion: 2020,
+        }
+      );
 
-    visit(ast, {
-      visitFunctionDeclaration: function(path) {
-        names = Object.keys(path.scope.lookup("zap").getBindings()).sort();
-        assert.deepEqual(names, ["zap"]);
-        this.traverse(path);
-      }
-    });
-  });
+      visit(ast, {
+        visitFunctionDeclaration: function (path) {
+          names = Object.keys(path.scope.lookup("zap").getBindings()).sort();
+          assert.deepEqual(names, ["zap"]);
+          this.traverse(path);
+        },
+      });
+    }
+  );
 
-  it("should inject temporary into current scope", function() {
+  it("should inject temporary into current scope", function () {
     var ast = parse(scope.join("\n"));
     var bindings;
 
     visit(ast, {
-      visitProgram: function(path) {
+      visitProgram: function (path) {
         path.scope.injectTemporary();
         bindings = path.scope.getBindings();
-        assert.deepEqual(["bar", "foo", "nom", "t$0$0"], Object.keys(bindings).sort());
+        assert.deepEqual(
+          ["bar", "foo", "nom", "t$0$0"],
+          Object.keys(bindings).sort()
+        );
         this.traverse(path);
       },
 
-      visitFunctionDeclaration: function(path) {
-        path.scope.injectTemporary(
-          path.scope.declareTemporary("t$")
-        )
+      visitFunctionDeclaration: function (path) {
+        path.scope.injectTemporary(path.scope.declareTemporary("t$"));
         bindings = path.scope.getBindings();
         assert.deepEqual(["baz", "t$1$0"], Object.keys(bindings));
         this.traverse(path);
-      }
+      },
     });
   });
 
-  it("declareTemporary should use distinct names in nested scopes", function() {
+  it("declareTemporary should use distinct names in nested scopes", function () {
     var ast = parse(scope.join("\n"));
     var globalVarDecl: any;
     var barVarDecl: any;
     var romVarDecl: any;
 
     visit(ast, {
-      visitProgram: function(path) {
-        path.get("body").unshift(
-          globalVarDecl = b.variableDeclaration("var", [
-            b.variableDeclarator(
-              path.scope.declareTemporary("$"),
-              b.literal("global")
-            ),
-            b.variableDeclarator(
-              path.scope.declareTemporary("$"),
-              b.literal("global")
-            )
-          ])
-        );
+      visitProgram: function (path) {
+        path
+          .get("body")
+          .unshift(
+            (globalVarDecl = b.variableDeclaration("var", [
+              b.variableDeclarator(
+                path.scope.declareTemporary("$"),
+                b.literal("global")
+              ),
+              b.variableDeclarator(
+                path.scope.declareTemporary("$"),
+                b.literal("global")
+              ),
+            ]))
+          );
 
         this.traverse(path);
       },
 
-      visitFunction: function(path) {
+      visitFunction: function (path) {
         var funcId = path.value.id;
 
         var varDecl = b.variableDeclaration("var", [
@@ -1291,7 +1347,7 @@ describe("scope methods", function () {
           b.variableDeclarator(
             path.scope.declareTemporary("$"),
             b.literal(funcId.name + 2)
-          )
+          ),
         ]);
 
         path.get("body", "body").unshift(varDecl);
@@ -1303,7 +1359,7 @@ describe("scope methods", function () {
         }
 
         this.traverse(path);
-      }
+      },
     });
 
     assert.strictEqual(globalVarDecl.declarations[0].id.name, "$0$0");
@@ -1315,7 +1371,7 @@ describe("scope methods", function () {
   });
 });
 
-describe("catch block scope", function() {
+describe("catch block scope", function () {
   var catchWithVarDecl = [
     "function foo(e) {",
     "  try {",
@@ -1327,7 +1383,7 @@ describe("catch block scope", function() {
     "    };",
     "  }",
     "  return f;",
-    "}"
+    "}",
   ];
 
   var path = new NodePath(parse(catchWithVarDecl.join("\n")));
@@ -1336,14 +1392,14 @@ describe("catch block scope", function() {
   var catchPath = fooPath.get("body", "body", 0, "handler");
   var catchScope = catchPath.scope;
 
-  it("should not affect outer scope declarations", function() {
+  it("should not affect outer scope declarations", function () {
     n.FunctionDeclaration.assert(fooScope.node);
     assert.strictEqual(fooScope.declares("e"), true);
     assert.strictEqual(fooScope.declares("f"), true);
     assert.strictEqual(fooScope.lookup("e"), fooScope);
   });
 
-  it("should declare only the guard parameter", function() {
+  it("should declare only the guard parameter", function () {
     n.CatchClause.assert(catchScope.node);
     assert.strictEqual(catchScope.declares("e"), true);
     assert.strictEqual(catchScope.declares("f"), false);
@@ -1351,7 +1407,7 @@ describe("catch block scope", function() {
     assert.strictEqual(catchScope.lookup("f"), fooScope);
   });
 
-  it("should shadow only the parameter in nested scopes", function() {
+  it("should shadow only the parameter in nested scopes", function () {
     var closurePath = catchPath.get("body", "body", 1, "argument");
     var closureScope = closurePath.scope;
     n.FunctionExpression.assert(closureScope.node);
@@ -1364,46 +1420,41 @@ describe("catch block scope", function() {
   });
 });
 
-describe("array and object pattern scope", function() {
-
+describe("array and object pattern scope", function () {
   function scopeFromPattern(pattern: any) {
     return new NodePath(
       b.program([
-        b.variableDeclaration('var', [
-          b.variableDeclarator(pattern, null)
-        ])
+        b.variableDeclaration("var", [b.variableDeclarator(pattern, null)]),
       ])
     ).scope;
   }
 
   // ObjectPattern with Property and SpreadProperty
   // ArrayPattern with SpreadElement
-  describe("esprima", function() {
-    var types = fork([
-      esprimaDef
-    ]);
+  describe("esprima", function () {
+    var types = fork([esprimaDef]);
     var b = types.builders;
 
     var objectPattern: any;
     var arrayPattern: any;
 
-    beforeEach(function() {
+    beforeEach(function () {
       // {a, b: c, ...d}
       objectPattern = b.objectPattern([
-        b.property('init', b.identifier('a'), b.identifier('a')),
-        b.property('init', b.identifier('b'), b.identifier('c')),
-        b.spreadProperty(b.identifier('d')),
+        b.property("init", b.identifier("a"), b.identifier("a")),
+        b.property("init", b.identifier("b"), b.identifier("c")),
+        b.spreadProperty(b.identifier("d")),
       ]);
 
       // [foo, bar, ...baz]
       arrayPattern = b.arrayPattern([
-        b.identifier('foo'),
-        b.identifier('bar'),
-        b.spreadElement(b.identifier('baz'))
+        b.identifier("foo"),
+        b.identifier("bar"),
+        b.spreadElement(b.identifier("baz")),
       ]);
     });
 
-    it("should handle object patterns variable declarations", function() {
+    it("should handle object patterns variable declarations", function () {
       var scope = scopeFromPattern(objectPattern);
 
       assert.strictEqual(scope.declares("a"), true);
@@ -1412,7 +1463,7 @@ describe("array and object pattern scope", function() {
       assert.strictEqual(scope.declares("d"), true);
     });
 
-    it("should handle array patterns in variable declarations", function() {
+    it("should handle array patterns in variable declarations", function () {
       var scope = scopeFromPattern(arrayPattern);
 
       assert.strictEqual(scope.declares("foo"), true);
@@ -1420,10 +1471,10 @@ describe("array and object pattern scope", function() {
       assert.strictEqual(scope.declares("baz"), true);
     });
 
-    it("should handle nested patterns in variable declarations", function() {
+    it("should handle nested patterns in variable declarations", function () {
       // {a, b: c, ...d, e: [foo, bar, ...baz]}
       objectPattern.properties.push(
-        b.property('init', b.identifier('e'), arrayPattern)
+        b.property("init", b.identifier("e"), arrayPattern)
       );
 
       var scope = scopeFromPattern(objectPattern);
@@ -1440,34 +1491,30 @@ describe("array and object pattern scope", function() {
 
   // ObjectPattern with PropertyPattern and SpreadPropertyPattern
   // ArrayPatterhn with SpreadElementPattern
-  describe("Mozilla Parser API", function() {
-    var types = fork([
-      coreDef,
-      es6Def,
-      es2020Def,
-    ]);
+  describe("Mozilla Parser API", function () {
+    var types = fork([coreDef, es6Def, es2020Def]);
     var b = types.builders;
 
     var objectPattern: any;
     var arrayPattern: any;
 
-    beforeEach(function() {
+    beforeEach(function () {
       // {a, b: c, ...d}
       objectPattern = b.objectPattern([
-        b.propertyPattern(b.identifier('a'), b.identifier('a')),
-        b.propertyPattern(b.identifier('b'), b.identifier('c')),
-        b.spreadPropertyPattern(b.identifier('d')),
+        b.propertyPattern(b.identifier("a"), b.identifier("a")),
+        b.propertyPattern(b.identifier("b"), b.identifier("c")),
+        b.spreadPropertyPattern(b.identifier("d")),
       ]);
 
       // [foo, bar, ...baz]
       arrayPattern = b.arrayPattern([
-        b.identifier('foo'),
-        b.identifier('bar'),
-        b.spreadElementPattern(b.identifier('baz'))
+        b.identifier("foo"),
+        b.identifier("bar"),
+        b.spreadElementPattern(b.identifier("baz")),
       ]);
     });
 
-    it("should handle object patterns variable declarations", function() {
+    it("should handle object patterns variable declarations", function () {
       var scope = scopeFromPattern(objectPattern);
 
       assert.strictEqual(scope.declares("a"), true);
@@ -1476,7 +1523,7 @@ describe("array and object pattern scope", function() {
       assert.strictEqual(scope.declares("d"), true);
     });
 
-    it("should handle array patterns in variable declarations", function() {
+    it("should handle array patterns in variable declarations", function () {
       var scope = scopeFromPattern(arrayPattern);
 
       assert.strictEqual(scope.declares("foo"), true);
@@ -1484,10 +1531,10 @@ describe("array and object pattern scope", function() {
       assert.strictEqual(scope.declares("baz"), true);
     });
 
-    it("should handle nested patterns in variable declarations", function() {
+    it("should handle nested patterns in variable declarations", function () {
       // {a, b: c, ...d, e: [foo, bar, ...baz]}
       objectPattern.properties.push(
-        b.propertyPattern(b.identifier('e'), arrayPattern)
+        b.propertyPattern(b.identifier("e"), arrayPattern)
       );
 
       var scope = scopeFromPattern(objectPattern);
@@ -1503,7 +1550,7 @@ describe("array and object pattern scope", function() {
   });
 });
 
-describe("types.defineMethod", function() {
+describe("types.defineMethod", function () {
   function at(this: any, loc: any) {
     n.SourceLocation.assert(loc);
     this.loc = loc;
@@ -1511,7 +1558,7 @@ describe("types.defineMethod", function() {
 
   var thisExpr: any = b.thisExpression();
 
-  it("should allow defining an .at method", function() {
+  it("should allow defining an .at method", function () {
     assert.strictEqual(defineMethod("at", at), void 0);
     assert.strictEqual(thisExpr.loc, null);
 
@@ -1523,7 +1570,7 @@ describe("types.defineMethod", function() {
       end: {
         line: 1,
         column: 4,
-      }
+      },
     });
 
     assert.strictEqual(thisExpr.loc.start.line, 1);
@@ -1532,7 +1579,7 @@ describe("types.defineMethod", function() {
     assert.strictEqual(thisExpr.loc.end.column, 4);
   });
 
-  it("should allow methods to be removed", function() {
+  it("should allow methods to be removed", function () {
     // Now try removing the method.
     assert.strictEqual(defineMethod("at"), at);
     assert.strictEqual(thisExpr.at, void 0);
@@ -1540,10 +1587,10 @@ describe("types.defineMethod", function() {
   });
 });
 
-describe("types.visit", function() {
+describe("types.visit", function () {
   var objProp: any;
 
-  beforeEach(function() {
+  beforeEach(function () {
     objProp = b.memberExpression(
       b.identifier("object"),
       b.identifier("property"),
@@ -1551,38 +1598,37 @@ describe("types.visit", function() {
     );
   });
 
-  it("should be identical to PathVisitor.visit", function() {
+  it("should be identical to PathVisitor.visit", function () {
     assert.strictEqual(visit, PathVisitor.visit);
   });
 
-  it("should work with no visitors", function() {
+  it("should work with no visitors", function () {
     var foo = b.identifier("foo");
     assert.strictEqual(visit(foo), foo);
   });
 
-  it("should allow simple tree modifications", function() {
+  it("should allow simple tree modifications", function () {
     var bar = visit(b.identifier("foo"), {
-      visitIdentifier: function(path) {
+      visitIdentifier: function (path) {
         assert.ok(path instanceof NodePath);
         path.value.name = "bar";
         return false;
-      }
+      },
     });
 
     n.Identifier.assert(bar);
     assert.strictEqual(bar.name, "bar");
   });
 
-  it("should complain about missing this.traverse", function() {
+  it("should complain about missing this.traverse", function () {
     try {
       visit(objProp, {
-        visitIdentifier: function(_path: any) {
+        visitIdentifier: function (_path: any) {
           // buh?
-        }
+        },
       });
 
       assert.ok(false, "should have thrown an exception");
-
     } catch (err) {
       assert.strictEqual(
         err.message,
@@ -1591,16 +1637,16 @@ describe("types.visit", function() {
     }
   });
 
-  it("should support this.traverse", function() {
+  it("should support this.traverse", function () {
     var idNames: any[] = [];
 
     visit(objProp, {
-      visitMemberExpression: function(path) {
+      visitMemberExpression: function (path) {
         this.traverse(path, {
-          visitIdentifier: function(path) {
+          visitIdentifier: function (path) {
             idNames.push("*" + path.value.name + "*");
             return false;
-          }
+          },
         });
 
         path.get("object", "name").replace("asdfasdf");
@@ -1609,10 +1655,10 @@ describe("types.visit", function() {
         this.visit(path.get("property"));
       },
 
-      visitIdentifier: function(path) {
+      visitIdentifier: function (path) {
         idNames.push(path.value.name);
         return false;
-      }
+      },
     });
 
     assert.deepEqual(idNames, ["*object*", "*property*", "zxcvzxcv"]);
@@ -1620,37 +1666,34 @@ describe("types.visit", function() {
     idNames.length = 0;
 
     visit(objProp, {
-      visitMemberExpression: function(path) {
+      visitMemberExpression: function (path) {
         path.get("object", "name").replace("asdfasdf");
         path.get("property", "name").replace("zxcvzxcv");
         this.traverse(path, {
-          visitIdentifier: function(path) {
+          visitIdentifier: function (path) {
             idNames.push(path.value.name);
             return false;
-          }
+          },
         });
-      }
+      },
     });
 
     assert.deepEqual(idNames, ["asdfasdf", "zxcvzxcv"]);
   });
 
-  it("should support this.replace", function() {
+  it("should support this.replace", function () {
     var seqExpr = b.sequenceExpression([
       b.literal("asdf"),
       b.identifier("zxcv"),
-      b.thisExpression()
+      b.thisExpression(),
     ]);
 
     visit(seqExpr, {
-      visitIdentifier: function(path) {
+      visitIdentifier: function (path) {
         assert.strictEqual(path.value.name, "zxcv");
-        path.replace(
-          b.identifier("foo"),
-          b.identifier("bar")
-        );
+        path.replace(b.identifier("foo"), b.identifier("bar"));
         return false;
-      }
+      },
     });
 
     assert.strictEqual(seqExpr.expressions.length, 4);
@@ -1664,13 +1707,13 @@ describe("types.visit", function() {
     assert.strictEqual(bar.name, "bar");
 
     visit(seqExpr, {
-      visitIdentifier: function(path) {
+      visitIdentifier: function (path) {
         if (path.value.name === "foo") {
           path.replace(path.value, path.value);
         }
 
         return false;
-      }
+      },
     });
 
     assert.strictEqual(seqExpr.expressions.length, 5);
@@ -1688,18 +1731,18 @@ describe("types.visit", function() {
     assert.strictEqual(bar.name, "bar");
 
     visit(seqExpr, {
-      visitLiteral: function(path) {
+      visitLiteral: function (path) {
         path.replace();
         return false;
       },
 
-      visitIdentifier: function(path) {
+      visitIdentifier: function (path) {
         if (path.value.name === "bar") {
           path.replace();
         }
 
         return false;
-      }
+      },
     });
 
     assert.strictEqual(seqExpr.expressions.length, 3);
@@ -1715,12 +1758,12 @@ describe("types.visit", function() {
     n.ThisExpression.assert(third);
   });
 
-  it("should reuse old VisitorContext objects", function() {
+  it("should reuse old VisitorContext objects", function () {
     var objectContext;
     var propertyContext;
 
     visit(objProp, {
-      visitIdentifier: function(path) {
+      visitIdentifier: function (path) {
         assert.strictEqual(this.needToCallTraverse, true);
         this.traverse(path);
         assert.strictEqual(path.name, path.value.name);
@@ -1729,7 +1772,7 @@ describe("types.visit", function() {
         } else if (path.name === "property") {
           propertyContext = this;
         }
-      }
+      },
     });
 
     assert.ok(objectContext);
@@ -1737,7 +1780,7 @@ describe("types.visit", function() {
     assert.strictEqual(objectContext, propertyContext);
   });
 
-  it("should dispatch to closest visitSupertype method", function() {
+  it("should dispatch to closest visitSupertype method", function () {
     var foo = b.identifier("foo");
     var bar = b.identifier("bar");
     var callExpr: any = b.callExpression(
@@ -1746,9 +1789,7 @@ describe("types.visit", function() {
           b.identifier("add"),
           [foo, bar],
           b.blockStatement([
-            b.returnStatement(
-              b.binaryExpression("+", foo, bar)
-            )
+            b.returnStatement(b.binaryExpression("+", foo, bar)),
           ])
         ),
         b.identifier("bind"),
@@ -1765,19 +1806,19 @@ describe("types.visit", function() {
     var functions: any[] = [];
 
     function makeVisitorMethod(array: any) {
-      return function(this: any, path: any) {
+      return function (this: any, path: any) {
         array.push(path.value);
         this.traverse(path);
       };
     }
 
     visit(callExpr, {
-      visitNode:            makeVisitorMethod(nodes),
-      visitExpression:      makeVisitorMethod(expressions),
-      visitIdentifier:      makeVisitorMethod(identifiers),
-      visitStatement:       makeVisitorMethod(statements),
+      visitNode: makeVisitorMethod(nodes),
+      visitExpression: makeVisitorMethod(expressions),
+      visitIdentifier: makeVisitorMethod(identifiers),
+      visitStatement: makeVisitorMethod(statements),
       visitReturnStatement: makeVisitorMethod(returnStatements),
-      visitFunction:        makeVisitorMethod(functions)
+      visitFunction: makeVisitorMethod(functions),
     });
 
     function check(array: any, ...rest: any[]) {
@@ -1789,35 +1830,36 @@ describe("types.visit", function() {
 
     check(nodes);
 
-    check(expressions,
-          callExpr,
-          callExpr.callee,
-          callExpr.callee.object.body.body[0].argument,
-          callExpr.arguments[0]);
+    check(
+      expressions,
+      callExpr,
+      callExpr.callee,
+      callExpr.callee.object.body.body[0].argument,
+      callExpr.arguments[0]
+    );
 
-    check(identifiers,
-          callExpr.callee.object.id,
-          foo,
-          bar,
-          foo,
-          bar,
-          callExpr.callee.property);
+    check(
+      identifiers,
+      callExpr.callee.object.id,
+      foo,
+      bar,
+      foo,
+      bar,
+      callExpr.callee.property
+    );
 
-    check(statements,
-          callExpr.callee.object.body);
+    check(statements, callExpr.callee.object.body);
 
-    check(returnStatements,
-          callExpr.callee.object.body.body[0]);
+    check(returnStatements, callExpr.callee.object.body.body[0]);
 
-    check(functions,
-          callExpr.callee.object);
+    check(functions, callExpr.callee.object);
   });
 
-  it("should replace this.currentPath with returned value", function() {
+  it("should replace this.currentPath with returned value", function () {
     assert.strictEqual(objProp.computed, false);
 
     visit(objProp, {
-      visitIdentifier: function(path) {
+      visitIdentifier: function (path) {
         if (path.value.name === "property") {
           path.parent.get("computed").replace(true);
           return b.callExpression(
@@ -1834,9 +1876,9 @@ describe("types.visit", function() {
         return;
       },
 
-      visitThisExpression: function(_path: any) {
+      visitThisExpression: function (_path: any) {
         return b.identifier("self");
-      }
+      },
     });
 
     assert.strictEqual(objProp.computed, true);
@@ -1855,10 +1897,10 @@ describe("types.visit", function() {
   });
 });
 
-describe("path.shift", function() {
-  it("should work like Array.prototype.shift", function() {
+describe("path.shift", function () {
+  it("should work like Array.prototype.shift", function () {
     var path = new NodePath({
-      elements: [0, "foo", true]
+      elements: [0, "foo", true],
     });
 
     var first = path.get("elements", 0);
@@ -1889,15 +1931,15 @@ describe("path.shift", function() {
     assert.strictEqual(path.get("elements", "length").value, 0);
   });
 
-  it("should throw when path.value not an array", function() {
-    assert.throws(function() {
+  it("should throw when path.value not an array", function () {
+    assert.throws(function () {
       new NodePath({ foo: 42 }).get("foo").shift();
     });
   });
 });
 
-describe("path.unshift", function() {
-  it("should work like Array.prototype.unshift", function() {
+describe("path.unshift", function () {
+  it("should work like Array.prototype.unshift", function () {
     var path = new NodePath(b.sequenceExpression([]));
     var elems = path.get("expressions");
 
@@ -1928,15 +1970,15 @@ describe("path.unshift", function() {
     assert.strictEqual(elems.get(1).parent, path);
   });
 
-  it("should throw when path.value not an array", function() {
-    assert.throws(function() {
+  it("should throw when path.value not an array", function () {
+    assert.throws(function () {
       new NodePath({ foo: 42 }).get("foo").unshift();
     });
   });
 });
 
-describe("path.push", function() {
-  it("should work like Array.prototype.push", function() {
+describe("path.push", function () {
+  it("should work like Array.prototype.push", function () {
     var path = new NodePath({ elements: [0] });
     var elems = path.get("elements");
     assert.strictEqual(elems.get("length").value, 1);
@@ -1952,17 +1994,17 @@ describe("path.push", function() {
     assert.strictEqual(elems.get("length").value, 6);
   });
 
-  it("should throw when path.value not an array", function() {
-    assert.throws(function() {
+  it("should throw when path.value not an array", function () {
+    assert.throws(function () {
       new NodePath({ foo: 42 }).get("foo").push("asdf");
     });
   });
 });
 
-describe("path.pop", function() {
-  it("should work like Array.prototype.pop", function() {
+describe("path.pop", function () {
+  it("should work like Array.prototype.pop", function () {
     var path = new NodePath({
-      elements: [0, "foo", true]
+      elements: [0, "foo", true],
     });
 
     var first = path.get("elements", 0);
@@ -1993,17 +2035,17 @@ describe("path.pop", function() {
     assert.strictEqual(path.get("elements", "length").value, 0);
   });
 
-  it("should throw when path.value not an array", function() {
-    assert.throws(function() {
+  it("should throw when path.value not an array", function () {
+    assert.throws(function () {
       new NodePath({ foo: 42 }).get("foo").pop();
     });
   });
 });
 
-describe("path.insertAt", function() {
-  it("should insert nodes at the given index", function() {
+describe("path.insertAt", function () {
+  it("should insert nodes at the given index", function () {
     var path = new NodePath({
-      elements: [0, "foo", true]
+      elements: [0, "foo", true],
     });
 
     var elems = path.get("elements");
@@ -2011,21 +2053,21 @@ describe("path.insertAt", function() {
     assert.deepEqual(elems.value, [0, "a", "b", "foo", true]);
 
     elems.insertAt(elems.get("length").value + 1, []);
-    assert.deepEqual(elems.value, [0, "a", "b", "foo", true,, []]);
+    assert.deepEqual(elems.value, [0, "a", "b", "foo", true, , []]);
     assert.strictEqual(elems.get("length").value, 7);
 
     elems.insertAt(elems.get("length").value + 12345);
-    assert.deepEqual(elems.value, [0, "a", "b", "foo", true,, []]);
+    assert.deepEqual(elems.value, [0, "a", "b", "foo", true, , []]);
     assert.strictEqual(elems.get("length").value, 7);
 
     elems.insertAt(-2, -2, -1);
-    assert.deepEqual(elems.value, [-2, -1, 0, "a", "b", "foo", true,, []]);
+    assert.deepEqual(elems.value, [-2, -1, 0, "a", "b", "foo", true, , []]);
     assert.strictEqual(elems.get("length").value, 9);
   });
 
-  it("should insert nodes even when path.value is empty", function() {
+  it("should insert nodes even when path.value is empty", function () {
     var path = new NodePath({
-      elements: []
+      elements: [],
     });
 
     var elems = path.get("elements");
@@ -2037,15 +2079,15 @@ describe("path.insertAt", function() {
     assert.deepEqual(elems.value, [, 0, "foo", true]);
   });
 
-  it("should throw when path.value not an array", function() {
-    assert.throws(function() {
+  it("should throw when path.value not an array", function () {
+    assert.throws(function () {
       new NodePath({ foo: 42 }).get("foo").insertAt(0);
     });
   });
 });
 
-describe("path.insertBefore", function() {
-  it("should insert nodes before the current path", function() {
+describe("path.insertBefore", function () {
+  it("should insert nodes before the current path", function () {
     var zero = b.literal(0);
     var one = b.literal(1);
     var two = b.literal(2);
@@ -2056,10 +2098,13 @@ describe("path.insertBefore", function() {
     var fooPath = path.get("expressions", 1);
     var truePath = path.get("expressions", 2);
     fooPath.insertBefore(one, two);
-    assert.deepEqual(
-      fooPath.parent.node.expressions,
-      [zero, one, two, foo, truth]
-    );
+    assert.deepEqual(fooPath.parent.node.expressions, [
+      zero,
+      one,
+      two,
+      foo,
+      truth,
+    ]);
 
     assert.strictEqual(path.get("expressions", 3), fooPath);
     assert.strictEqual(fooPath.value.value, "foo");
@@ -2068,15 +2113,15 @@ describe("path.insertBefore", function() {
     assert.strictEqual(truePath.value.value, true);
   });
 
-  it("should throw when path.parentPath.value not an array", function() {
-    assert.throws(function() {
+  it("should throw when path.parentPath.value not an array", function () {
+    assert.throws(function () {
       new NodePath({ foo: 42 }).get("foo").insertBefore(0);
     });
   });
 });
 
-describe("path.insertAfter", function() {
-  it("should insert nodes after the current path", function() {
+describe("path.insertAfter", function () {
+  it("should insert nodes after the current path", function () {
     var zero = b.literal(0);
     var one = b.literal(1);
     var two = b.literal(2);
@@ -2087,10 +2132,13 @@ describe("path.insertAfter", function() {
     var fooPath = path.get("expressions", 1);
     var truePath = path.get("expressions", 2);
     fooPath.insertAfter(one, two);
-    assert.deepEqual(
-      fooPath.parent.node.expressions,
-      [zero, foo, one, two, truth]
-    );
+    assert.deepEqual(fooPath.parent.node.expressions, [
+      zero,
+      foo,
+      one,
+      two,
+      truth,
+    ]);
 
     assert.strictEqual(path.get("expressions", 1), fooPath);
     assert.strictEqual(fooPath.value.value, "foo");
@@ -2101,28 +2149,32 @@ describe("path.insertAfter", function() {
     assert.strictEqual(path.get("expressions", 4), truePath);
     assert.strictEqual(truePath.value.value, true);
 
-    var three = b.literal(3)
+    var three = b.literal(3);
     truePath.insertAfter(three);
-    assert.deepEqual(
-      fooPath.parent.node.expressions,
-      [zero, foo, one, two, truth, three]
-    );
+    assert.deepEqual(fooPath.parent.node.expressions, [
+      zero,
+      foo,
+      one,
+      two,
+      truth,
+      three,
+    ]);
   });
 
-  it("should throw when path.parentPath.value not an array", function() {
-    assert.throws(function() {
+  it("should throw when path.parentPath.value not an array", function () {
+    assert.throws(function () {
       new NodePath({ foo: 42 }).get("foo").insertAfter(0);
     });
   });
 });
 
-describe("types.astNodesAreEquivalent", function() {
-  it("should work for simple values", function() {
+describe("types.astNodesAreEquivalent", function () {
+  it("should work for simple values", function () {
     astNodesAreEquivalent.assert(1, 2 - 1);
     astNodesAreEquivalent.assert("1", 1);
     astNodesAreEquivalent.assert(true, !false);
 
-    var d1 = new Date;
+    var d1 = new Date();
     var d2 = new Date(+d1);
     assert.notStrictEqual(d1, d2);
     astNodesAreEquivalent.assert(d1, d2);
@@ -2131,45 +2183,57 @@ describe("types.astNodesAreEquivalent", function() {
     assert.strictEqual(astNodesAreEquivalent(/x/g, /x/), false);
   });
 
-  it("should work for arrays", function() {
+  it("should work for arrays", function () {
     astNodesAreEquivalent.assert([], [1, 2, 3].slice(10));
     astNodesAreEquivalent.assert([1, 2, 3], [1].concat(2, [3]));
-    astNodesAreEquivalent.assert([1,, 3], [1,, 3,]);
+    astNodesAreEquivalent.assert([1, , 3], [1, , 3]);
+    assert.strictEqual(astNodesAreEquivalent([1, , 3], [1, void 0, 3]), false);
+  });
+
+  it("should work for objects", function () {
+    astNodesAreEquivalent.assert(
+      {
+        foo: 42,
+        bar: "asdf",
+      },
+      {
+        bar: "asdf",
+        foo: 42,
+      }
+    );
+
     assert.strictEqual(
-      astNodesAreEquivalent([1,, 3], [1, void 0, 3]),
+      astNodesAreEquivalent(
+        {
+          foo: 42,
+          bar: "asdf",
+          baz: true,
+        },
+        {
+          bar: "asdf",
+          foo: 42,
+        }
+      ),
+      false
+    );
+
+    assert.strictEqual(
+      astNodesAreEquivalent(
+        {
+          foo: 42,
+          bar: "asdf",
+        },
+        {
+          bar: "asdf",
+          foo: 42,
+          baz: true,
+        }
+      ),
       false
     );
   });
 
-  it("should work for objects", function() {
-    astNodesAreEquivalent.assert({
-      foo: 42,
-      bar: "asdf"
-    }, {
-      bar: "asdf",
-      foo: 42
-    });
-
-    assert.strictEqual(astNodesAreEquivalent({
-      foo: 42,
-      bar: "asdf",
-      baz: true
-    }, {
-      bar: "asdf",
-      foo: 42
-    }), false);
-
-    assert.strictEqual(astNodesAreEquivalent({
-      foo: 42,
-      bar: "asdf"
-    }, {
-      bar: "asdf",
-      foo: 42,
-      baz: true
-    }), false);
-  });
-
-  it("should work for AST nodes", function() {
+  it("should work for AST nodes", function () {
     function check(src1: any, src2: any) {
       astNodesAreEquivalent.assert(parse(src1), parse(src2));
     }
@@ -2178,7 +2242,7 @@ describe("types.astNodesAreEquivalent", function() {
       var ast1 = parse(src1, { loc: true, range: true });
       var ast2 = parse(src2, { loc: true });
 
-      assert.throws(function() {
+      assert.throws(function () {
         astNodesAreEquivalent.assert(ast1, ast2);
       });
 
@@ -2189,7 +2253,7 @@ describe("types.astNodesAreEquivalent", function() {
       var a: any = ast1;
       var b: any = ast2;
 
-      problemPath.forEach(function(name) {
+      problemPath.forEach(function (name) {
         assert.strictEqual(name in a, true);
         assert.strictEqual(name in b, true);
         a = a[name];
@@ -2201,59 +2265,55 @@ describe("types.astNodesAreEquivalent", function() {
 
     check("1\n;", "1;");
 
-    check("console.log(this.toString(36));", [
-      "// leading comment",
-      "console.log(",
-      "  this.toString(36)",
-      "/* trailing comment */)"
-    ].join("\n"));
+    check(
+      "console.log(this.toString(36));",
+      [
+        "// leading comment",
+        "console.log(",
+        "  this.toString(36)",
+        "/* trailing comment */)",
+      ].join("\n")
+    );
 
     check("foo()", "foo /*anonymous*/ ()");
 
-    check("new (bar(1,2)(3,4)).baz.call(null)",
-          "new(  bar(     1,2)  \n  (3,4)).  baz.call(   null)");
+    check(
+      "new (bar(1,2)(3,4)).baz.call(null)",
+      "new(  bar(     1,2)  \n  (3,4)).  baz.call(   null)"
+    );
 
-    check([
-      "(function(x) {",
-      "  Foo = /asdf/.test(x);",
-      "}());"
-    ].join("\n"), [
-      "(function(x) {",
-      "  Foo = /asdf/.test(x);",
-      "})();"
-    ].join("\n\n"));
+    check(
+      ["(function(x) {", "  Foo = /asdf/.test(x);", "}());"].join("\n"),
+      ["(function(x) {", "  Foo = /asdf/.test(x);", "})();"].join("\n\n")
+    );
 
-    checkNot([
-      "(function(x) {",
-      "  Foo = /asdf/.test(x);",
-      "}());"
-    ].join("\n"), [
-      "(function(x) {",
-      "  Foo = /asdf/.test(x);",
-      "})('~asdf~');"
-    ].join("\n\n"));
+    checkNot(
+      ["(function(x) {", "  Foo = /asdf/.test(x);", "}());"].join("\n"),
+      ["(function(x) {", "  Foo = /asdf/.test(x);", "})('~asdf~');"].join(
+        "\n\n"
+      )
+    );
 
-    checkNot([
-      "(function(x) {",
-      "  var Foo = /asdf/.test(x);",
-      "}());"
-    ].join("\n"), [
-      "(function(x) {",
-      "  Foo = /asdf/.test(x);",
-      "})(/*'~asdf~'*/);"
-    ].join("\n\n"));
+    checkNot(
+      ["(function(x) {", "  var Foo = /asdf/.test(x);", "}());"].join("\n"),
+      ["(function(x) {", "  Foo = /asdf/.test(x);", "})(/*'~asdf~'*/);"].join(
+        "\n\n"
+      )
+    );
   });
 });
 
-describe("RegExpLiteral nodes", function() {
-  it("should have a default-computable .regex field", function() {
+describe("RegExpLiteral nodes", function () {
+  it("should have a default-computable .regex field", function () {
     var ast = parse('/x*/gmi.test("xxx")');
     var regExp: Literal | undefined;
     var statement = ast.body[0];
-    if (statement.type === "ExpressionStatement" &&
-        statement.expression.type === "CallExpression" &&
-        statement.expression.callee.type === "MemberExpression" &&
-        statement.expression.callee.object.type === "Literal") {
+    if (
+      statement.type === "ExpressionStatement" &&
+      statement.expression.type === "CallExpression" &&
+      statement.expression.callee.type === "MemberExpression" &&
+      statement.expression.callee.object.type === "Literal"
+    ) {
       regExp = statement.expression.callee.object;
     }
 
@@ -2268,17 +2328,17 @@ describe("RegExpLiteral nodes", function() {
 
       assert.deepEqual(regex, {
         pattern: "x*",
-        flags: "gim"
+        flags: "gim",
       });
 
       Type.from({
         pattern: isString,
-        flags: isString
+        flags: isString,
       }).assert(regex);
     }
   });
 
-  it("should typecheck with explicit .regex field", function() {
+  it("should typecheck with explicit .regex field", function () {
     var stringLiteral = b.literal("asdf");
     assert.strictEqual(stringLiteral.regex, null);
     n.Literal.assert(stringLiteral, true);
@@ -2295,9 +2355,7 @@ describe("RegExpLiteral nodes", function() {
 
 describe("BigIntLiteral nodes", function () {
   it("should parse correctly with Babylon", function () {
-    var types = fork([
-      babelDef,
-    ]);
+    var types = fork([babelDef]);
     var n = types.namedTypes;
     var BigIntLiteral = n.BigIntLiteral;
 
@@ -2320,15 +2378,9 @@ describe("BigIntLiteral nodes", function () {
     function checkExp(exp: any) {
       BigIntLiteral.assert(exp, true);
 
-      assert.strictEqual(
-        exp.extra.rawValue,
-        exp.value
-      );
+      assert.strictEqual(exp.extra.rawValue, exp.value);
 
-      assert.strictEqual(
-        exp.extra.raw,
-        exp.value + "n"
-      );
+      assert.strictEqual(exp.extra.raw, exp.value + "n");
 
       delete exp.extra;
 
@@ -2336,15 +2388,9 @@ describe("BigIntLiteral nodes", function () {
 
       var extra = types.getFieldValue(exp, "extra");
 
-      assert.strictEqual(
-        extra.rawValue,
-        exp.value
-      );
+      assert.strictEqual(extra.rawValue, exp.value);
 
-      assert.strictEqual(
-        extra.raw,
-        exp.value + "n"
-      );
+      assert.strictEqual(extra.raw, exp.value + "n");
     }
 
     check("0n");
@@ -2358,57 +2404,57 @@ describe("BigIntLiteral nodes", function () {
   });
 });
 
-describe("MemberExpression", function() {
-  it("should set computed flag to false by default", function(){
+describe("MemberExpression", function () {
+  it("should set computed flag to false by default", function () {
     var memberExpression = b.memberExpression(
-      b.identifier('foo'),
-      b.identifier('bar'),
+      b.identifier("foo"),
+      b.identifier("bar")
     );
 
-    assert.strictEqual(memberExpression.computed, false)
+    assert.strictEqual(memberExpression.computed, false);
   });
 
-  it("should not set computed to true if property is a callExpression", function(){
+  it("should not set computed to true if property is a callExpression", function () {
     var memberExpression = b.memberExpression(
-      b.identifier('foo'),
-      b.callExpression(b.identifier('bar'), []),
+      b.identifier("foo"),
+      b.callExpression(b.identifier("bar"), [])
     );
 
-    assert.strictEqual(memberExpression.computed, false)
+    assert.strictEqual(memberExpression.computed, false);
   });
 
-  it("should set computed flag to true if property is a literal", function(){
+  it("should set computed flag to true if property is a literal", function () {
     var memberExpression = b.memberExpression(
-      b.identifier('foo'),
-      b.literal('bar'),
+      b.identifier("foo"),
+      b.literal("bar")
     );
 
-    assert.strictEqual(memberExpression.computed, true)
+    assert.strictEqual(memberExpression.computed, true);
   });
 
-  it("should set computed flag to true if property is a memberExpression", function(){
+  it("should set computed flag to true if property is a memberExpression", function () {
     var memberExpression = b.memberExpression(
-      b.identifier('foo'),
-      b.memberExpression(b.identifier('foo'), b.literal('bar')),
+      b.identifier("foo"),
+      b.memberExpression(b.identifier("foo"), b.literal("bar"))
     );
 
-    assert.strictEqual(memberExpression.computed, true)
+    assert.strictEqual(memberExpression.computed, true);
   });
 
-  it("should set computed flag to true if property is a binaryExpression", function(){
+  it("should set computed flag to true if property is a binaryExpression", function () {
     var memberExpression = b.memberExpression(
-      b.identifier('foo'),
-      b.memberExpression(b.identifier('foo'), b.literal('bar')),
+      b.identifier("foo"),
+      b.memberExpression(b.identifier("foo"), b.literal("bar"))
     );
 
-    assert.strictEqual(memberExpression.computed, true)
+    assert.strictEqual(memberExpression.computed, true);
   });
 
-  it("should override computed value when passed as a third argument to the builder", function(){
+  it("should override computed value when passed as a third argument to the builder", function () {
     var memberExpression = b.memberExpression(
-      b.identifier('foo'),
-      b.callExpression(b.identifier('bar'), []),
-      true,
+      b.identifier("foo"),
+      b.callExpression(b.identifier("bar"), []),
+      true
     );
 
     assert.strictEqual(memberExpression.computed, true);
@@ -2419,10 +2465,7 @@ describe("Optional Chaining", function () {
   describe("ChainExpression", function () {
     it("should set expression.optional in CallExpression to false by default", function () {
       const chainExpression = b.chainExpression(
-        b.callExpression(
-          b.identifier("call"),
-          [],
-        ),
+        b.callExpression(b.identifier("call"), [])
       );
 
       n.CallExpression.assert(chainExpression.expression);
@@ -2437,7 +2480,7 @@ describe("Optional Chaining", function () {
           callee: b.identifier("fn"),
           arguments: [],
           optional: true,
-        }),
+        })
       );
 
       n.CallExpression.assert(chainExpression.expression);
@@ -2448,11 +2491,7 @@ describe("Optional Chaining", function () {
 
     it("should set expression.optional in MemberExpression to false by default", function () {
       const chainExpression = b.chainExpression(
-        b.memberExpression(
-          b.identifier("a"),
-          b.identifier("b"),
-          false,
-        ),
+        b.memberExpression(b.identifier("a"), b.identifier("b"), false)
       );
 
       n.MemberExpression.assert(chainExpression.expression);
@@ -2468,7 +2507,7 @@ describe("Optional Chaining", function () {
           property: b.identifier("b"),
           computed: false,
           optional: true,
-        }),
+        })
       );
 
       n.MemberExpression.assert(chainExpression.expression);
@@ -2478,10 +2517,10 @@ describe("Optional Chaining", function () {
     });
   });
 
-  describe('OptionalCallExpression', function() {
+  describe("OptionalCallExpression", function () {
     it("should set optional to true by default", function () {
       const optionalCallExpression = b.optionalCallExpression(
-        b.identifier('foo'),
+        b.identifier("foo"),
         []
       );
 
@@ -2494,7 +2533,7 @@ describe("Optional Chaining", function () {
 
     it("should allow optional to be false", function () {
       const optionalCallExpression = b.optionalCallExpression(
-        b.identifier('foo'),
+        b.identifier("foo"),
         [],
         false
       );
@@ -2507,11 +2546,11 @@ describe("Optional Chaining", function () {
     });
   });
 
-  describe('OptionalMemberExpression', function () {
+  describe("OptionalMemberExpression", function () {
     it("should set optional to true by default", function () {
       const optionalMemberExpression = b.optionalMemberExpression(
-        b.identifier('foo'),
-        b.identifier('bar')
+        b.identifier("foo"),
+        b.identifier("bar")
       );
 
       n.OptionalMemberExpression.assert(optionalMemberExpression);
@@ -2523,8 +2562,8 @@ describe("Optional Chaining", function () {
 
     it("should allow optional to be false", function () {
       const optionalMemberExpression = b.optionalMemberExpression(
-        b.identifier('foo'),
-        b.identifier('bar'),
+        b.identifier("foo"),
+        b.identifier("bar"),
         true,
         false
       );
@@ -2538,8 +2577,8 @@ describe("Optional Chaining", function () {
   });
 });
 
-describe('Nullish Coalescing Operator', function() {
-  it('should allow `??` as operator', function() {
+describe("Nullish Coalescing Operator", function () {
+  it("should allow `??` as operator", function () {
     var logicalExpression = b.logicalExpression(
       "??",
       b.identifier("a"),
@@ -2549,58 +2588,43 @@ describe('Nullish Coalescing Operator', function() {
     assert.strictEqual(logicalExpression.operator, "??");
   });
 
-  it('should not allow `crap` as operator', function() {
-    assert.throws(function() {
+  it("should not allow `crap` as operator", function () {
+    assert.throws(function () {
       b.logicalExpression(
         "crap" as $InvalidType,
         b.identifier("a"),
         b.identifier("b")
       );
-    }, "does not match field \"operator\"");
+    }, 'does not match field "operator"');
   });
 });
 
-describe('Dynamic import', () => {
-  const {
-    visit,
-    namedTypes: n,
-    builders: b,
-  } = fork([ es2020Def ]);
+describe("Dynamic import", () => {
+  const { visit, namedTypes: n, builders: b } = fork([es2020Def]);
 
-  it('should work with expression values', () => {
-    const importExpression =  b.importExpression(
-      b.sequenceExpression([
-        b.literal(0),
-        b.literal("foo"),
-      ])
+  it("should work with expression values", () => {
+    const importExpression = b.importExpression(
+      b.sequenceExpression([b.literal(0), b.literal("foo")])
     );
 
     assert.deepStrictEqual(
       importExpression.source,
-      b.sequenceExpression([
-        b.literal(0),
-        b.literal("foo"),
-      ])
+      b.sequenceExpression([b.literal(0), b.literal("foo")])
     );
   });
 
-  it('should not allow empty source', () => {
+  it("should not allow empty source", () => {
     assert.throws(() => {
-      b.importExpression(
-        undefined as $InvalidType
-      );
+      b.importExpression(undefined as $InvalidType);
     });
   });
 
-  it('should parse with espree', () => {
-    const code = [
-      "import { foo } from './foo';",
-      "import('./bar')",
-    ].join('\n');
+  it("should parse with espree", () => {
+    const code = ["import { foo } from './foo';", "import('./bar')"].join("\n");
 
     const ast = espree.parse(code, {
-      sourceType: 'module',
-      ecmaVersion: 2020
+      sourceType: "module",
+      ecmaVersion: 2020,
     });
 
     visit(ast, {
@@ -2613,7 +2637,7 @@ describe('Dynamic import', () => {
         n.Literal.check(source);
         assert.strictEqual(source.value, "./bar");
         this.traverse(path);
-      }
-    })
+      },
+    });
   });
 });

@@ -1,5 +1,5 @@
-import { Fork } from "../types";
-import typesPlugin from "./types";
+import { Fork } from "../types.ts";
+import typesPlugin from "./types.ts";
 
 var hasOwn = Object.prototype.hasOwnProperty;
 
@@ -12,8 +12,8 @@ export interface Scope {
   bindings: any;
   types: any;
   didScan: boolean;
-  declares(name: any): any
-  declaresType(name: any): any
+  declares(name: any): any;
+  declaresType(name: any): any;
   declareTemporary(prefix?: any): any;
   injectTemporary(identifier: any, init: any): any;
   scan(force?: any): any;
@@ -25,7 +25,7 @@ export interface Scope {
 }
 
 export interface ScopeConstructor {
-  new(path: any, parentScope: any): Scope;
+  new (path: any, parentScope: any): Scope;
   isEstablishedBy(node: any): any;
 }
 
@@ -78,31 +78,31 @@ export default function scopePlugin(fork: Fork) {
 
     // In case you didn't know, the caught parameter shadows any variable
     // of the same name in an outer scope.
-    namedTypes.CatchClause
+    namedTypes.CatchClause,
   ];
 
   var ScopeType = Type.or.apply(Type, scopeTypes);
 
-  Scope.isEstablishedBy = function(node) {
+  Scope.isEstablishedBy = function (node) {
     return ScopeType.check(node);
   };
 
   var Sp: Scope = Scope.prototype;
 
-// Will be overridden after an instance lazily calls scanScope.
+  // Will be overridden after an instance lazily calls scanScope.
   Sp.didScan = false;
 
-  Sp.declares = function(name) {
+  Sp.declares = function (name) {
     this.scan();
     return hasOwn.call(this.bindings, name);
   };
 
-  Sp.declaresType = function(name) {
+  Sp.declaresType = function (name) {
     this.scan();
     return hasOwn.call(this.types, name);
   };
 
-  Sp.declareTemporary = function(prefix) {
+  Sp.declareTemporary = function (prefix) {
     if (prefix) {
       if (!/^[a-z$_]/i.test(prefix)) {
         throw new Error("");
@@ -123,10 +123,10 @@ export default function scopePlugin(fork: Fork) {
     }
 
     var name = prefix + index;
-    return this.bindings[name] = types.builders.identifier(name);
+    return (this.bindings[name] = types.builders.identifier(name));
   };
 
-  Sp.injectTemporary = function(identifier, init) {
+  Sp.injectTemporary = function (identifier, init) {
     identifier || (identifier = this.declareTemporary());
 
     var bodyPath = this.path.get("body");
@@ -135,16 +135,15 @@ export default function scopePlugin(fork: Fork) {
     }
 
     bodyPath.unshift(
-      b.variableDeclaration(
-      "var",
-      [b.variableDeclarator(identifier, init || null)]
-      )
+      b.variableDeclaration("var", [
+        b.variableDeclarator(identifier, init || null),
+      ])
     );
 
     return identifier;
   };
 
-  Sp.scan = function(force) {
+  Sp.scan = function (force) {
     if (force || !this.didScan) {
       for (var name in this.bindings) {
         // Empty out this.bindings, just in cases.
@@ -177,7 +176,6 @@ export default function scopePlugin(fork: Fork) {
       if (param.value) {
         addPattern(param, bindings);
       }
-
     } else {
       recursiveScanScope(path, bindings, scopeTypes);
     }
@@ -186,54 +184,54 @@ export default function scopePlugin(fork: Fork) {
   function recursiveScanScope(path: any, bindings: any, scopeTypes: any) {
     var node = path.value;
 
-    if (path.parent &&
+    if (
+      path.parent &&
       namedTypes.FunctionExpression.check(path.parent.node) &&
-      path.parent.node.id) {
+      path.parent.node.id
+    ) {
       addPattern(path.parent.get("id"), bindings);
     }
 
     if (!node) {
       // None of the remaining cases matter if node is falsy.
-
     } else if (isArray.check(node)) {
-      path.each(function(childPath: any) {
+      path.each(function (childPath: any) {
         recursiveScanChild(childPath, bindings, scopeTypes);
       });
-
     } else if (namedTypes.Function.check(node)) {
-      path.get("params").each(function(paramPath: any) {
+      path.get("params").each(function (paramPath: any) {
         addPattern(paramPath, bindings);
       });
 
       recursiveScanChild(path.get("body"), bindings, scopeTypes);
-
     } else if (
       (namedTypes.TypeAlias && namedTypes.TypeAlias.check(node)) ||
-      (namedTypes.InterfaceDeclaration && namedTypes.InterfaceDeclaration.check(node)) ||
-      (namedTypes.TSTypeAliasDeclaration && namedTypes.TSTypeAliasDeclaration.check(node)) ||
-      (namedTypes.TSInterfaceDeclaration && namedTypes.TSInterfaceDeclaration.check(node))
+      (namedTypes.InterfaceDeclaration &&
+        namedTypes.InterfaceDeclaration.check(node)) ||
+      (namedTypes.TSTypeAliasDeclaration &&
+        namedTypes.TSTypeAliasDeclaration.check(node)) ||
+      (namedTypes.TSInterfaceDeclaration &&
+        namedTypes.TSInterfaceDeclaration.check(node))
     ) {
       addTypePattern(path.get("id"), scopeTypes);
-
     } else if (namedTypes.VariableDeclarator.check(node)) {
       addPattern(path.get("id"), bindings);
       recursiveScanChild(path.get("init"), bindings, scopeTypes);
-
-    } else if (node.type === "ImportSpecifier" ||
+    } else if (
+      node.type === "ImportSpecifier" ||
       node.type === "ImportNamespaceSpecifier" ||
-      node.type === "ImportDefaultSpecifier") {
+      node.type === "ImportDefaultSpecifier"
+    ) {
       addPattern(
         // Esprima used to use the .name field to refer to the local
         // binding identifier for ImportSpecifier nodes, but .id for
         // ImportNamespaceSpecifier and ImportDefaultSpecifier nodes.
         // ESTree/Acorn/ESpree use .local for all three node types.
-        path.get(node.local ? "local" :
-        node.name ? "name" : "id"),
+        path.get(node.local ? "local" : node.name ? "name" : "id"),
         bindings
       );
-
     } else if (Node.check(node) && !Expression.check(node)) {
-      types.eachField(node, function(name: any, child: any) {
+      types.eachField(node, function (name: any, child: any) {
         var childPath = path.get(name);
         if (!pathHasValue(childPath, child)) {
           throw new Error("");
@@ -250,10 +248,12 @@ export default function scopePlugin(fork: Fork) {
 
     // Empty arrays are probably produced by defaults.emptyArray, in which
     // case is makes sense to regard them as equivalent, if not ===.
-    if (Array.isArray(path.value) &&
+    if (
+      Array.isArray(path.value) &&
       path.value.length === 0 &&
       Array.isArray(value) &&
-      value.length === 0) {
+      value.length === 0
+    ) {
       return true;
     }
 
@@ -265,15 +265,13 @@ export default function scopePlugin(fork: Fork) {
 
     if (!node || Expression.check(node)) {
       // Ignore falsy values and Expressions.
-
-    } else if (namedTypes.FunctionDeclaration.check(node) &&
-           node.id !== null) {
+    } else if (namedTypes.FunctionDeclaration.check(node) && node.id !== null) {
       addPattern(path.get("id"), bindings);
-
-    } else if (namedTypes.ClassDeclaration &&
-      namedTypes.ClassDeclaration.check(node)) {
+    } else if (
+      namedTypes.ClassDeclaration &&
+      namedTypes.ClassDeclaration.check(node)
+    ) {
       addPattern(path.get("id"), bindings);
-
     } else if (ScopeType.check(node)) {
       if (
         namedTypes.CatchClause.check(node) &&
@@ -296,7 +294,6 @@ export default function scopePlugin(fork: Fork) {
           delete bindings[catchParamName];
         }
       }
-
     } else {
       recursiveScanScope(path, bindings, scopeTypes);
     }
@@ -312,48 +309,56 @@ export default function scopePlugin(fork: Fork) {
       } else {
         bindings[pattern.name] = [patternPath];
       }
-
-    } else if (namedTypes.AssignmentPattern &&
-      namedTypes.AssignmentPattern.check(pattern)) {
-      addPattern(patternPath.get('left'), bindings);
-
-    } else if (namedTypes.ObjectPattern &&
-      namedTypes.ObjectPattern.check(pattern)) {
-      patternPath.get('properties').each(function(propertyPath: any) {
+    } else if (
+      namedTypes.AssignmentPattern &&
+      namedTypes.AssignmentPattern.check(pattern)
+    ) {
+      addPattern(patternPath.get("left"), bindings);
+    } else if (
+      namedTypes.ObjectPattern &&
+      namedTypes.ObjectPattern.check(pattern)
+    ) {
+      patternPath.get("properties").each(function (propertyPath: any) {
         var property = propertyPath.value;
         if (namedTypes.Pattern.check(property)) {
           addPattern(propertyPath, bindings);
-        } else  if (namedTypes.Property.check(property)) {
-          addPattern(propertyPath.get('value'), bindings);
-        } else if (namedTypes.SpreadProperty &&
-          namedTypes.SpreadProperty.check(property)) {
-          addPattern(propertyPath.get('argument'), bindings);
+        } else if (namedTypes.Property.check(property)) {
+          addPattern(propertyPath.get("value"), bindings);
+        } else if (
+          namedTypes.SpreadProperty &&
+          namedTypes.SpreadProperty.check(property)
+        ) {
+          addPattern(propertyPath.get("argument"), bindings);
         }
       });
-
-    } else if (namedTypes.ArrayPattern &&
-      namedTypes.ArrayPattern.check(pattern)) {
-      patternPath.get('elements').each(function(elementPath: any) {
+    } else if (
+      namedTypes.ArrayPattern &&
+      namedTypes.ArrayPattern.check(pattern)
+    ) {
+      patternPath.get("elements").each(function (elementPath: any) {
         var element = elementPath.value;
         if (namedTypes.Pattern.check(element)) {
           addPattern(elementPath, bindings);
-        } else if (namedTypes.SpreadElement &&
-          namedTypes.SpreadElement.check(element)) {
+        } else if (
+          namedTypes.SpreadElement &&
+          namedTypes.SpreadElement.check(element)
+        ) {
           addPattern(elementPath.get("argument"), bindings);
         }
       });
-
-    } else if (namedTypes.PropertyPattern &&
-      namedTypes.PropertyPattern.check(pattern)) {
-      addPattern(patternPath.get('pattern'), bindings);
-
-    } else if ((namedTypes.SpreadElementPattern &&
-      namedTypes.SpreadElementPattern.check(pattern)) ||
-      (namedTypes.RestElement &&
-      namedTypes.RestElement.check(pattern)) ||
+    } else if (
+      namedTypes.PropertyPattern &&
+      namedTypes.PropertyPattern.check(pattern)
+    ) {
+      addPattern(patternPath.get("pattern"), bindings);
+    } else if (
+      (namedTypes.SpreadElementPattern &&
+        namedTypes.SpreadElementPattern.check(pattern)) ||
+      (namedTypes.RestElement && namedTypes.RestElement.check(pattern)) ||
       (namedTypes.SpreadPropertyPattern &&
-      namedTypes.SpreadPropertyPattern.check(pattern))) {
-      addPattern(patternPath.get('argument'), bindings);
+        namedTypes.SpreadPropertyPattern.check(pattern))
+    ) {
+      addPattern(patternPath.get("argument"), bindings);
     }
   }
 
@@ -367,30 +372,26 @@ export default function scopePlugin(fork: Fork) {
       } else {
         types[pattern.name] = [patternPath];
       }
-
     }
   }
 
-  Sp.lookup = function(name) {
+  Sp.lookup = function (name) {
     for (var scope = this; scope; scope = scope.parent)
-      if (scope.declares(name))
-        break;
+      if (scope.declares(name)) break;
     return scope;
   };
 
-  Sp.lookupType = function(name) {
+  Sp.lookupType = function (name) {
     for (var scope = this; scope; scope = scope.parent)
-      if (scope.declaresType(name))
-        break;
+      if (scope.declaresType(name)) break;
     return scope;
   };
 
-  Sp.getGlobalScope = function() {
+  Sp.getGlobalScope = function () {
     var scope = this;
-    while (!scope.isGlobal)
-      scope = scope.parent;
+    while (!scope.isGlobal) scope = scope.parent;
     return scope;
   };
 
   return Scope;
-};
+}

@@ -1,29 +1,26 @@
-import assert from "assert";
-import flowParser from "flow-parser";
-import forkFn from "../fork";
-import flowDef from "../def/flow";
+import assert from "assert.ts";
+import flowParser from "flow-parser.ts";
+import forkFn from "../fork.ts";
+import flowDef from "../def/flow.ts";
 
-var types = forkFn([
-  flowDef,
-]);
+var types = forkFn([flowDef]);
 
 describe("flow types", function () {
   it("issue #242", function () {
     const parser = {
       parse(code: string) {
         return flowParser.parse(code, {
-          types: true
+          types: true,
         });
-      }
+      },
     };
 
-    const program = parser.parse([
-      "class A<B> extends C<D> {}",
-      "function f<E>() {}",
-    ].join("\n"));
+    const program = parser.parse(
+      ["class A<B> extends C<D> {}", "function f<E>() {}"].join("\n")
+    );
 
     const identifierNames: any[] = [];
-    const typeParamNames: any[] = []
+    const typeParamNames: any[] = [];
 
     types.visit(program, {
       visitIdentifier(path: any) {
@@ -34,7 +31,7 @@ describe("flow types", function () {
       visitTypeParameter(path: any) {
         typeParamNames.push(path.node.name);
         this.traverse(path);
-      }
+      },
     });
 
     assert.deepEqual(identifierNames, ["A", "C", "D", "f"]);
@@ -45,63 +42,68 @@ describe("flow types", function () {
     const parser = {
       parse(code: string) {
         return flowParser.parse(code, {
-          types: true
+          types: true,
         });
-      }
+      },
     };
 
-    const program = parser.parse('declare module.exports: {};');
+    const program = parser.parse("declare module.exports: {};");
 
-    assert.strictEqual(program.body[0].type, 'DeclareModuleExports');
+    assert.strictEqual(program.body[0].type, "DeclareModuleExports");
     assert.notEqual(program.body[0].typeAnnotation, undefined);
-    assert.strictEqual(program.body[0].typeAnnotation.type, 'TypeAnnotation');
+    assert.strictEqual(program.body[0].typeAnnotation.type, "TypeAnnotation");
   });
 
   it("Explicit type arguments", function () {
     const parser = {
       parse(code: string) {
         return flowParser.parse(code, {
-          types: true
+          types: true,
         });
-      }
+      },
     };
 
-    const program = parser.parse([
-      'test<A>();',
-      'test<B, C>();',
-      'new test<D>();',
-      'new test<E, F>();',
-    ].join("\n"));
-    
-    const typeParamNames: any[] = []
+    const program = parser.parse(
+      [
+        "test<A>();",
+        "test<B, C>();",
+        "new test<D>();",
+        "new test<E, F>();",
+      ].join("\n")
+    );
+
+    const typeParamNames: any[] = [];
 
     types.visit(program, {
       visitGenericTypeAnnotation(path: any) {
         typeParamNames.push(path.node.id.name);
         this.traverse(path);
-      }
+      },
     });
 
     assert.deepEqual(typeParamNames, ["A", "B", "C", "D", "E", "F"]);
   });
 
-  describe('scope', () => {
-    const scope = [
-      "type Foo = {}",
-      "interface Bar {}"
-    ];
-  
+  describe("scope", () => {
+    const scope = ["type Foo = {}", "interface Bar {}"];
+
     const ast = flowParser.parse(scope.join("\n"));
-  
-    it("should register flow types with the scope", function() {  
+
+    it("should register flow types with the scope", function () {
       types.visit(ast, {
         visitProgram(path: any) {
-          assert(path.scope.declaresType('Foo'));
-          assert(path.scope.declaresType('Bar'));
-          assert.equal(path.scope.lookupType('Foo').getTypes()['Foo'][0].parent.node.type, 'TypeAlias');
-          assert.equal(path.scope.lookupType('Bar').getTypes()['Bar'][0].parent.node.type, 'InterfaceDeclaration');
+          assert(path.scope.declaresType("Foo"));
+          assert(path.scope.declaresType("Bar"));
+          assert.equal(
+            path.scope.lookupType("Foo").getTypes()["Foo"][0].parent.node.type,
+            "TypeAlias"
+          );
+          assert.equal(
+            path.scope.lookupType("Bar").getTypes()["Bar"][0].parent.node.type,
+            "InterfaceDeclaration"
+          );
           return false;
-        }
+        },
       });
     });
   });

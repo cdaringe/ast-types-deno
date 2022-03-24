@@ -1,9 +1,9 @@
-import typesPlugin from "./lib/types";
-import pathVisitorPlugin from "./lib/path-visitor";
-import equivPlugin from "./lib/equiv";
-import pathPlugin from "./lib/path";
-import nodePathPlugin from "./lib/node-path";
-import { Def, Fork, Plugin } from "./types";
+import typesPlugin from "./lib/types.ts";
+import pathVisitorPlugin from "./lib/path-visitor.ts";
+import equivPlugin from "./lib/equiv.ts";
+import pathPlugin from "./lib/path.ts";
+import nodePathPlugin from "./lib/node-path.ts";
+import { Def, Fork, Plugin } from "./types.ts";
 
 export default function (defs: Def[]) {
   const fork = createFork();
@@ -36,7 +36,7 @@ export default function (defs: Def[]) {
     use: fork.use,
     visit: PathVisitor.visit,
   };
-};
+}
 
 function createFork(): Fork {
   const used: Plugin<unknown>[] = [];

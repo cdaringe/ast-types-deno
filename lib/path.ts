@@ -1,5 +1,5 @@
-import { Fork } from "../types";
-import typesPlugin, { ASTNode } from "./types";
+import { Fork } from "../types.ts";
+import typesPlugin, { ASTNode } from "./types.ts";
 
 var Op = Object.prototype;
 var hasOwn = Op.hasOwnProperty;
@@ -25,7 +25,7 @@ export interface Path<V = any> {
 }
 
 export interface PathConstructor {
-  new<V = any>(value: any, parentPath?: any, name?: any): Path<V>;
+  new <V = any>(value: any, parentPath?: any, name?: any): Path<V>;
 }
 
 export default function pathPlugin(fork: Fork): PathConstructor {
@@ -33,7 +33,12 @@ export default function pathPlugin(fork: Fork): PathConstructor {
   var isArray = types.builtInTypes.array;
   var isNumber = types.builtInTypes.number;
 
-  const Path = function Path(this: Path, value: any, parentPath?: any, name?: any) {
+  const Path = function Path(
+    this: Path,
+    value: any,
+    parentPath?: any,
+    name?: any
+  ) {
     if (!(this instanceof Path)) {
       throw new Error("Path constructor cannot be invoked without 'new'");
     }
@@ -75,18 +80,22 @@ export default function pathPlugin(fork: Fork): PathConstructor {
     var cache = getChildCache(path);
     var actualChildValue = path.getValueProperty(name);
     var childPath = cache[name];
-    if (!hasOwn.call(cache, name) ||
+    if (
+      !hasOwn.call(cache, name) ||
       // Ensure consistency between cache and reality.
-      childPath.value !== actualChildValue) {
+      childPath.value !== actualChildValue
+    ) {
       childPath = cache[name] = new path.constructor(
-        actualChildValue, path, name
+        actualChildValue,
+        path,
+        name
       );
     }
     return childPath;
   }
 
-// This method is designed to be overridden by subclasses that need to
-// handle missing properties, etc.
+  // This method is designed to be overridden by subclasses that need to
+  // handle missing properties, etc.
   Pp.getValueProperty = function getValueProperty(name) {
     return this.value[name];
   };
@@ -222,7 +231,7 @@ export default function pathPlugin(fork: Fork): PathConstructor {
 
   Pp.push = function push(...args) {
     isArray.assert(this.value);
-    delete getChildCache(this).length
+    delete getChildCache(this).length;
     return this.value.push.apply(this.value, args);
   };
 
@@ -294,7 +303,7 @@ export default function pathPlugin(fork: Fork): PathConstructor {
       // recover by searching for path.value in parentValue.
       var i = parentValue.indexOf(path.value);
       if (i >= 0) {
-        parentCache[path.name = i] = path;
+        parentCache[(path.name = i)] = path;
       }
     } else {
       // If path.value disagrees with parentValue[path.name], and
@@ -336,7 +345,7 @@ export default function pathPlugin(fork: Fork): PathConstructor {
       if (splicedOut[0] !== this.value) {
         throw new Error("");
       }
-      if (parentValue.length !== (originalLength - 1 + count)) {
+      if (parentValue.length !== originalLength - 1 + count) {
         throw new Error("");
       }
 
@@ -346,7 +355,6 @@ export default function pathPlugin(fork: Fork): PathConstructor {
         delete this.value;
         delete parentCache[this.name];
         this.__childCache = null;
-
       } else {
         if (parentValue[this.name] !== replacement) {
           throw new Error("");
@@ -365,14 +373,12 @@ export default function pathPlugin(fork: Fork): PathConstructor {
           throw new Error("");
         }
       }
-
     } else if (count === 1) {
       if (this.value !== replacement) {
         this.__childCache = null;
       }
       this.value = parentValue[this.name] = replacement;
       results.push(this);
-
     } else if (count === 0) {
       delete parentValue[this.name];
       delete this.value;
@@ -380,7 +386,6 @@ export default function pathPlugin(fork: Fork): PathConstructor {
 
       // Leave this path cached as parentCache[this.name], even though
       // it no longer has a value defined.
-
     } else {
       throw new Error("Could not replace path");
     }
@@ -389,4 +394,4 @@ export default function pathPlugin(fork: Fork): PathConstructor {
   };
 
   return Path;
-};
+}

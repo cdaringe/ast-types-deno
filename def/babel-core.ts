@@ -1,8 +1,8 @@
-import { Fork } from "../types";
-import esProposalsDef from "./es-proposals";
-import typesPlugin from "../lib/types";
-import sharedPlugin from "../lib/shared";
-import { namedTypes as N } from "../gen/namedTypes";
+import { Fork } from "../types.ts";
+import esProposalsDef from "./es-proposals.ts";
+import typesPlugin from "../lib/types.ts";
+import sharedPlugin from "../lib/shared.ts";
+import { namedTypes as N } from "../gen/namedTypes.ts";
 
 export default function (fork: Fork) {
   fork.use(esProposalsDef);
@@ -12,9 +12,7 @@ export default function (fork: Fork) {
   var def = types.Type.def;
   var or = types.Type.or;
 
-  def("Noop")
-    .bases("Statement")
-    .build();
+  def("Noop").bases("Statement").build();
 
   def("DoExpression")
     .bases("Expression")
@@ -76,28 +74,33 @@ export default function (fork: Fork) {
     .build("body")
     .field("body", [def("Statement")])
     .field("directives", [def("Directive")], defaults.emptyArray)
-    .field("interpreter", or(def("InterpreterDirective"), null), defaults["null"]);
+    .field(
+      "interpreter",
+      or(def("InterpreterDirective"), null),
+      defaults["null"]
+    );
 
   // Split Literal
-  def("StringLiteral")
-    .bases("Literal")
-    .build("value")
-    .field("value", String);
+  def("StringLiteral").bases("Literal").build("value").field("value", String);
 
   def("NumericLiteral")
     .bases("Literal")
     .build("value")
     .field("value", Number)
     .field("raw", or(String, null), defaults["null"])
-    .field("extra", {
-      rawValue: Number,
-      raw: String
-    }, function getDefault(this: N.NumericLiteral) {
-      return {
-        rawValue: this.value,
-        raw: this.value + ""
+    .field(
+      "extra",
+      {
+        rawValue: Number,
+        raw: String,
+      },
+      function getDefault(this: N.NumericLiteral) {
+        return {
+          rawValue: this.value,
+          raw: this.value + "",
+        };
       }
-    });
+    );
 
   def("BigIntLiteral")
     .bases("Literal")
@@ -105,25 +108,26 @@ export default function (fork: Fork) {
     // Only String really seems appropriate here, since BigInt values
     // often exceed the limits of JS numbers.
     .field("value", or(String, Number))
-    .field("extra", {
-      rawValue: String,
-      raw: String
-    }, function getDefault(this: N.BigIntLiteral) {
-      return {
-        rawValue: String(this.value),
-        raw: this.value + "n"
-      };
-    });
+    .field(
+      "extra",
+      {
+        rawValue: String,
+        raw: String,
+      },
+      function getDefault(this: N.BigIntLiteral) {
+        return {
+          rawValue: String(this.value),
+          raw: this.value + "n",
+        };
+      }
+    );
 
   def("NullLiteral")
     .bases("Literal")
     .build()
     .field("value", null, defaults["null"]);
 
-  def("BooleanLiteral")
-    .bases("Literal")
-    .build("value")
-    .field("value", Boolean);
+  def("BooleanLiteral").bases("Literal").build("value").field("value", Boolean);
 
   def("RegExpLiteral")
     .bases("Literal")
@@ -159,21 +163,23 @@ export default function (fork: Fork) {
     .field("computed", Boolean, defaults["false"])
     .field("generator", Boolean, defaults["false"])
     .field("async", Boolean, defaults["false"])
-    .field("accessibility", // TypeScript
-           or(def("Literal"), null),
-           defaults["null"])
-    .field("decorators",
-           or([def("Decorator")], null),
-           defaults["null"]);
+    .field(
+      "accessibility", // TypeScript
+      or(def("Literal"), null),
+      defaults["null"]
+    )
+    .field("decorators", or([def("Decorator")], null), defaults["null"]);
 
   def("ObjectProperty")
     .bases("Node")
     .build("key", "value")
     .field("key", or(def("Literal"), def("Identifier"), def("Expression")))
     .field("value", or(def("Expression"), def("Pattern")))
-    .field("accessibility", // TypeScript
-           or(def("Literal"), null),
-           defaults["null"])
+    .field(
+      "accessibility", // TypeScript
+      or(def("Literal"), null),
+      defaults["null"]
+    )
     .field("computed", Boolean, defaults["false"]);
 
   var ClassBodyElement = or(
@@ -183,7 +189,7 @@ export default function (fork: Fork) {
     def("ClassProperty"),
     def("ClassPrivateProperty"),
     def("ClassMethod"),
-    def("ClassPrivateMethod"),
+    def("ClassPrivateMethod")
   );
 
   // MethodDefinition -> ClassMethod
@@ -202,17 +208,23 @@ export default function (fork: Fork) {
     .build("key", "params", "body", "kind", "computed", "static")
     .field("key", def("PrivateName"));
 
-  ["ClassMethod",
-   "ClassPrivateMethod",
-  ].forEach(typeName => {
+  ["ClassMethod", "ClassPrivateMethod"].forEach((typeName) => {
     def(typeName)
       .field("kind", or("get", "set", "method", "constructor"), () => "method")
       .field("body", def("BlockStatement"))
       .field("computed", Boolean, defaults["false"])
       .field("static", or(Boolean, null), defaults["null"])
       .field("abstract", or(Boolean, null), defaults["null"])
-      .field("access", or("public", "private", "protected", null), defaults["null"])
-      .field("accessibility", or("public", "private", "protected", null), defaults["null"])
+      .field(
+        "access",
+        or("public", "private", "protected", null),
+        defaults["null"]
+      )
+      .field(
+        "accessibility",
+        or("public", "private", "protected", null),
+        defaults["null"]
+      )
       .field("decorators", or([def("Decorator")], null), defaults["null"])
       .field("optional", or(Boolean, null), defaults["null"]);
   });
@@ -231,9 +243,7 @@ export default function (fork: Fork) {
     .bases("Pattern")
     .build("properties")
     .field("properties", [ObjectPatternProperty])
-    .field("decorators",
-           or([def("Decorator")], null),
-           defaults["null"]);
+    .field("decorators", or([def("Decorator")], null), defaults["null"]);
 
   def("SpreadProperty")
     .bases("Node")
@@ -248,14 +258,10 @@ export default function (fork: Fork) {
   def("ForAwaitStatement")
     .bases("Statement")
     .build("left", "right", "body")
-    .field("left", or(
-      def("VariableDeclaration"),
-      def("Expression")))
+    .field("left", or(def("VariableDeclaration"), def("Expression")))
     .field("right", def("Expression"))
     .field("body", def("Statement"));
 
   // The callee node of a dynamic import(...) expression.
-  def("Import")
-    .bases("Expression")
-    .build();
-};
+  def("Import").bases("Expression").build();
+}

@@ -1,7 +1,7 @@
-import { Fork } from "../types";
-import { BinaryOperators, AssignmentOperators } from "./core-operators";
-import es6Def from "./es6";
-import typesPlugin from "../lib/types";
+import { Fork } from "../types.ts";
+import { BinaryOperators, AssignmentOperators } from "./core-operators.ts";
+import es6Def from "./es6.ts";
+import typesPlugin from "../lib/types.ts";
 
 export default function (fork: Fork) {
   fork.use(es6Def);
@@ -10,19 +10,11 @@ export default function (fork: Fork) {
   const def = types.Type.def;
   const or = types.Type.or;
 
-  const BinaryOperator = or(
-    ...BinaryOperators,
-    "**",
-  );
+  const BinaryOperator = or(...BinaryOperators, "**");
 
-  def("BinaryExpression")
-    .field("operator", BinaryOperator)
+  def("BinaryExpression").field("operator", BinaryOperator);
 
-  const AssignmentOperator = or(
-    ...AssignmentOperators,
-    "**=",
-  );
+  const AssignmentOperator = or(...AssignmentOperators, "**=");
 
-  def("AssignmentExpression")
-    .field("operator", AssignmentOperator)
-};
+  def("AssignmentExpression").field("operator", AssignmentOperator);
+}

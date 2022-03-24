@@ -1,7 +1,7 @@
-import { Fork } from "../types";
-import es2017Def from "./es2017";
-import typesPlugin from "../lib/types";
-import sharedPlugin from "../lib/shared";
+import { Fork } from "../types.ts";
+import es2017Def from "./es2017.ts";
+import typesPlugin from "../lib/types.ts";
+import sharedPlugin from "../lib/shared.ts";
 
 export default function (fork: Fork) {
   fork.use(es2017Def);
@@ -11,8 +11,7 @@ export default function (fork: Fork) {
   const or = types.Type.or;
   const defaults = fork.use(sharedPlugin).defaults;
 
-  def("ForOfStatement")
-    .field("await", Boolean, defaults["false"]);
+  def("ForOfStatement").field("await", Boolean, defaults["false"]);
 
   // Legacy
   def("SpreadProperty")
@@ -20,15 +19,18 @@ export default function (fork: Fork) {
     .build("argument")
     .field("argument", def("Expression"));
 
-  def("ObjectExpression")
-    .field("properties", [or(
+  def("ObjectExpression").field("properties", [
+    or(
       def("Property"),
       def("SpreadProperty"), // Legacy
       def("SpreadElement")
-    )]);
+    ),
+  ]);
 
-  def("TemplateElement")
-    .field("value", {"cooked": or(String, null), "raw": String});
+  def("TemplateElement").field("value", {
+    cooked: or(String, null),
+    raw: String,
+  });
 
   // Legacy
   def("SpreadPropertyPattern")
@@ -36,6 +38,12 @@ export default function (fork: Fork) {
     .build("argument")
     .field("argument", def("Pattern"));
 
-  def("ObjectPattern")
-    .field("properties", [or(def("PropertyPattern"), def("Property"), def("RestElement"), def("SpreadPropertyPattern"))]);
-};
+  def("ObjectPattern").field("properties", [
+    or(
+      def("PropertyPattern"),
+      def("Property"),
+      def("RestElement"),
+      def("SpreadPropertyPattern")
+    ),
+  ]);
+}

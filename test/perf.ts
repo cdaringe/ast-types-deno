@@ -1,8 +1,8 @@
-import path from "path";
-import fs from "fs";
-import { parse } from "esprima";
+import path from "path.ts";
+import fs from "fs.ts";
+import { parse } from "esprima.ts";
 // @ts-ignore Cannot find module 'ast-types'. [2307]
-import { visit } from "ast-types";
+import { visit } from "ast-types.ts";
 
 var backbone = fs.readFileSync(
   path.join(__dirname, "data", "backbone.js"),
@@ -12,14 +12,14 @@ var backbone = fs.readFileSync(
 var ast = parse(backbone);
 
 var names: any[] = [];
-var start = +new Date;
+var start = +new Date();
 
 visit(ast, {
-  visitNode: function(path: any) {
+  visitNode: function (path: any) {
     names.push(path.name);
     this.traverse(path);
-  }
+  },
 });
 
 console.log(names.length);
-console.log(+new Date - start, "ms");
+console.log(+new Date() - start, "ms");

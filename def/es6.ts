@@ -1,7 +1,7 @@
-import { Fork } from "../types";
-import coreDef from "./core";
-import typesPlugin from "../lib/types";
-import sharedPlugin from "../lib/shared";
+import { Fork } from "../types.ts";
+import coreDef from "./core.ts";
+import typesPlugin from "../lib/types.ts";
+import sharedPlugin from "../lib/shared.ts";
 
 export default function (fork: Fork) {
   fork.use(coreDef);
@@ -23,8 +23,11 @@ export default function (fork: Fork) {
     .bases("Pattern")
     .build("argument")
     .field("argument", def("Pattern"))
-    .field("typeAnnotation", // for Babylon. Flow parser puts it on the identifier
-      or(def("TypeAnnotation"), def("TSTypeAnnotation"), null), defaults["null"]);
+    .field(
+      "typeAnnotation", // for Babylon. Flow parser puts it on the identifier
+      or(def("TypeAnnotation"), def("TSTypeAnnotation"), null),
+      defaults["null"]
+    );
 
   def("SpreadElementPattern")
     .bases("Pattern")
@@ -34,10 +37,15 @@ export default function (fork: Fork) {
   def("FunctionDeclaration")
     .build("id", "params", "body", "generator", "expression")
     // May be `null` in the context of `export default function () {}`
-    .field("id", or(def("Identifier"), null))
+    .field("id", or(def("Identifier"), null));
 
-  def("FunctionExpression")
-    .build("id", "params", "body", "generator", "expression");
+  def("FunctionExpression").build(
+    "id",
+    "params",
+    "body",
+    "generator",
+    "expression"
+  );
 
   def("ArrowFunctionExpression")
     .bases("Function", "Expression")
@@ -54,9 +62,7 @@ export default function (fork: Fork) {
   def("ForOfStatement")
     .bases("Statement")
     .build("left", "right", "body")
-    .field("left", or(
-      def("VariableDeclaration"),
-      def("Pattern")))
+    .field("left", or(def("VariableDeclaration"), def("Pattern")))
     .field("right", def("Expression"))
     .field("body", def("Statement"));
 
@@ -94,8 +100,7 @@ export default function (fork: Fork) {
     .field("shorthand", Boolean, defaults["false"])
     .field("computed", Boolean, defaults["false"]);
 
-  def("ObjectProperty")
-    .field("shorthand", Boolean, defaults["false"]);
+  def("ObjectProperty").field("shorthand", Boolean, defaults["false"]);
 
   def("PropertyPattern")
     .bases("Pattern")
@@ -119,19 +124,17 @@ export default function (fork: Fork) {
     .build("argument")
     .field("argument", def("Expression"));
 
-  def("ArrayExpression")
-    .field("elements", [or(
-      def("Expression"),
-      def("SpreadElement"),
-      def("RestElement"),
-      null
-    )]);
+  def("ArrayExpression").field("elements", [
+    or(def("Expression"), def("SpreadElement"), def("RestElement"), null),
+  ]);
 
-  def("NewExpression")
-    .field("arguments", [or(def("Expression"), def("SpreadElement"))]);
+  def("NewExpression").field("arguments", [
+    or(def("Expression"), def("SpreadElement")),
+  ]);
 
-  def("CallExpression")
-    .field("arguments", [or(def("Expression"), def("SpreadElement"))]);
+  def("CallExpression").field("arguments", [
+    or(def("Expression"), def("SpreadElement")),
+  ]);
 
   // Note: this node type is *not* an AssignmentExpression with a Pattern on
   // the left-hand side! The existing AssignmentExpression type already
@@ -192,9 +195,7 @@ export default function (fork: Fork) {
     .field("body", def("ClassBody"))
     .field("superClass", or(def("Expression"), null), defaults["null"]);
 
-  def("Super")
-    .bases("Expression")
-    .build();
+  def("Super").bases("Expression").build();
 
   // Specifier and ModuleSpecifier are abstract non-standard types
   // introduced for definitional convenience.
@@ -223,28 +224,27 @@ export default function (fork: Fork) {
     .field("imported", def("Identifier"));
 
   // import <id> from ...;
-  def("ImportDefaultSpecifier")
-    .bases("ModuleSpecifier")
-    .build("local");
+  def("ImportDefaultSpecifier").bases("ModuleSpecifier").build("local");
 
   // import <* as id> from ...;
-  def("ImportNamespaceSpecifier")
-    .bases("ModuleSpecifier")
-    .build("local");
+  def("ImportNamespaceSpecifier").bases("ModuleSpecifier").build("local");
 
   def("ImportDeclaration")
     .bases("Declaration")
     .build("specifiers", "source", "importKind")
-    .field("specifiers", [or(
-      def("ImportSpecifier"),
-      def("ImportNamespaceSpecifier"),
-      def("ImportDefaultSpecifier")
-    )], defaults.emptyArray)
+    .field(
+      "specifiers",
+      [
+        or(
+          def("ImportSpecifier"),
+          def("ImportNamespaceSpecifier"),
+          def("ImportDefaultSpecifier")
+        ),
+      ],
+      defaults.emptyArray
+    )
     .field("source", def("Literal"))
-    .field("importKind", or(
-      "value",
-      "type"
-    ), function() {
+    .field("importKind", or("value", "type"), function () {
       return "value";
     });
 
@@ -285,7 +285,7 @@ export default function (fork: Fork) {
   def("TemplateElement")
     .bases("Node")
     .build("value", "tail")
-    .field("value", {"cooked": String, "raw": String})
+    .field("value", { cooked: String, raw: String })
     .field("tail", Boolean);
 
   def("MetaProperty")
@@ -293,4 +293,4 @@ export default function (fork: Fork) {
     .build("meta", "property")
     .field("meta", def("Identifier"))
     .field("property", def("Identifier"));
-};
+}

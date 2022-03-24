@@ -1,6 +1,6 @@
-import assert from "assert";
-import { namedTypes, builders } from "../main";
-import * as types from "../main";
+import assert from "assert.ts";
+import { namedTypes, builders } from "../main.ts";
+import * as types from "../main.ts";
 
 describe("namedTypes", function () {
   it("should work as a namespace", function () {
@@ -12,10 +12,7 @@ describe("namedTypes", function () {
     function getIdName(id: namedTypes.Identifier) {
       return id.name;
     }
-    assert.strictEqual(
-      getIdName(builders.identifier("oyez")),
-      "oyez",
-    );
+    assert.strictEqual(getIdName(builders.identifier("oyez")), "oyez");
   });
 
   it("should work as a value", function () {
@@ -34,10 +31,7 @@ describe("types.namedTypes", function () {
     function getIdName(id: types.namedTypes.Identifier) {
       return id.name;
     }
-    assert.strictEqual(
-      getIdName(types.builders.identifier("oyez")),
-      "oyez",
-    );
+    assert.strictEqual(getIdName(types.builders.identifier("oyez")), "oyez");
   });
 
   it("should work as a value", function () {

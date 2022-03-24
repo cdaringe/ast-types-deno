@@ -1,7 +1,7 @@
-import { Fork } from "../types";
-import es2018Def from "./es2018";
-import typesPlugin from "../lib/types";
-import sharedPlugin from "../lib/shared";
+import { Fork } from "../types.ts";
+import es2018Def from "./es2018.ts";
+import typesPlugin from "../lib/types.ts";
+import sharedPlugin from "../lib/shared.ts";
 
 export default function (fork: Fork) {
   fork.use(es2018Def);
@@ -11,6 +11,5 @@ export default function (fork: Fork) {
   const or = types.Type.or;
   const defaults = fork.use(sharedPlugin).defaults;
 
-  def("CatchClause")
-    .field("param", or(def("Pattern"), null), defaults["null"]);
-};
+  def("CatchClause").field("param", or(def("Pattern"), null), defaults["null"]);
+}

@@ -1,12 +1,7 @@
-import fs from "fs";
-import path from "path";
-import { prettyPrint } from "recast";
-import {
-  Type,
-  builders as b,
-  namedTypes as n,
-  getBuilderName,
-} from "../main";
+import fs from "fs.ts";
+import path from "path.ts";
+import { prettyPrint } from "recast.ts";
+import { Type, builders as b, namedTypes as n, getBuilderName } from "../main";
 
 const Op = Object.prototype;
 const hasOwn = Op.hasOwnProperty;
@@ -21,7 +16,7 @@ const RESERVED_WORDS: { [reservedWord: string]: boolean | undefined } = {
 const NAMED_TYPES_ID = b.identifier("namedTypes");
 const NAMED_TYPES_IMPORT = b.importDeclaration(
   [b.importSpecifier(NAMED_TYPES_ID)],
-  b.stringLiteral("./namedTypes"),
+  b.stringLiteral("./namedTypes")
 );
 
 const KINDS_ID = b.identifier("K");
@@ -38,7 +33,7 @@ const out = [
     file: "kinds.ts",
     ast: moduleWithBody([
       NAMED_TYPES_IMPORT,
-      ...Object.keys(supertypeToSubtypes).map(supertype => {
+      ...Object.keys(supertypeToSubtypes).map((supertype) => {
         const buildableSubtypes = getBuildableSubtypes(supertype);
         if (buildableSubtypes.length === 0) {
           // Some of the XML* types don't have buildable subtypes,
@@ -46,7 +41,9 @@ const out = [
           return b.exportNamedDeclaration(
             b.tsTypeAliasDeclaration(
               b.identifier(`${supertype}Kind`),
-              b.tsTypeReference(b.tsQualifiedName(NAMED_TYPES_ID, b.identifier(supertype)))
+              b.tsTypeReference(
+                b.tsQualifiedName(NAMED_TYPES_ID, b.identifier(supertype))
+              )
             )
           );
         }
@@ -54,9 +51,13 @@ const out = [
         return b.exportNamedDeclaration(
           b.tsTypeAliasDeclaration(
             b.identifier(`${supertype}Kind`),
-            b.tsUnionType(buildableSubtypes.map(subtype =>
-              b.tsTypeReference(b.tsQualifiedName(NAMED_TYPES_ID, b.identifier(subtype)))
-            ))
+            b.tsUnionType(
+              buildableSubtypes.map((subtype) =>
+                b.tsTypeReference(
+                  b.tsQualifiedName(NAMED_TYPES_ID, b.identifier(subtype))
+                )
+              )
+            )
           )
         );
       }),
@@ -65,24 +66,31 @@ const out = [
   {
     file: "namedTypes.ts",
     ast: moduleWithBody([
-      b.importDeclaration([b.importSpecifier(b.identifier("Omit"))], b.stringLiteral("../types")),
-      b.importDeclaration([b.importSpecifier(b.identifier("Type"))], b.stringLiteral("../lib/types")),
+      b.importDeclaration(
+        [b.importSpecifier(b.identifier("Omit"))],
+        b.stringLiteral("../types")
+      ),
+      b.importDeclaration(
+        [b.importSpecifier(b.identifier("Type"))],
+        b.stringLiteral("../lib/types")
+      ),
       KINDS_IMPORT,
       b.exportNamedDeclaration(
         b.tsModuleDeclaration(
           b.identifier("namedTypes"),
           b.tsModuleBlock([
-            ...Object.keys(n).map(typeName => {
+            ...Object.keys(n).map((typeName) => {
               const typeDef = Type.def(typeName);
               const ownFieldNames = Object.keys(typeDef.ownFields);
 
               return b.exportNamedDeclaration(
                 b.tsInterfaceDeclaration.from({
                   id: b.identifier(typeName),
-                  extends: typeDef.baseNames.map(baseName => {
+                  extends: typeDef.baseNames.map((baseName) => {
                     const baseDef = Type.def(baseName);
-                    const commonFieldNames = ownFieldNames
-                      .filter(fieldName => !!baseDef.allFields[fieldName]);
+                    const commonFieldNames = ownFieldNames.filter(
+                      (fieldName) => !!baseDef.allFields[fieldName]
+                    );
 
                     if (commonFieldNames.length > 0) {
                       return b.tsExpressionWithTypeArguments(
@@ -90,30 +98,34 @@ const out = [
                         b.tsTypeParameterInstantiation([
                           b.tsTypeReference(b.identifier(baseName)),
                           b.tsUnionType(
-                            commonFieldNames.map(fieldName =>
+                            commonFieldNames.map((fieldName) =>
                               b.tsLiteralType(b.stringLiteral(fieldName))
                             )
                           ),
                         ])
                       );
                     } else {
-                      return b.tsExpressionWithTypeArguments(b.identifier(baseName));
+                      return b.tsExpressionWithTypeArguments(
+                        b.identifier(baseName)
+                      );
                     }
                   }),
                   body: b.tsInterfaceBody(
-                    ownFieldNames.map(fieldName => {
+                    ownFieldNames.map((fieldName) => {
                       const field = typeDef.allFields[fieldName];
 
                       if (field.name === "type" && field.defaultFn) {
                         return b.tsPropertySignature(
                           b.identifier("type"),
-                          b.tsTypeAnnotation(b.tsLiteralType(b.stringLiteral(field.defaultFn())))
+                          b.tsTypeAnnotation(
+                            b.tsLiteralType(b.stringLiteral(field.defaultFn()))
+                          )
                         );
                       } else if (field.defaultFn) {
                         return b.tsPropertySignature(
                           b.identifier(field.name),
                           b.tsTypeAnnotation(getTSTypeAnnotation(field.type)),
-                          true, // optional
+                          true // optional
                         );
                       }
 
@@ -132,13 +144,15 @@ const out = [
                 b.identifier("ASTNode"),
                 b.tsUnionType(
                   Object.keys(n)
-                    .filter(typeName => Type.def(typeName).buildable)
-                    .map(typeName => b.tsTypeReference(b.identifier(typeName))),
+                    .filter((typeName) => Type.def(typeName).buildable)
+                    .map((typeName) =>
+                      b.tsTypeReference(b.identifier(typeName))
+                    )
                 )
               )
             ),
 
-            ...Object.keys(n).map(typeName =>
+            ...Object.keys(n).map((typeName) =>
               b.exportNamedDeclaration(
                 b.variableDeclaration("let", [
                   b.variableDeclarator(
@@ -148,35 +162,35 @@ const out = [
                         b.tsTypeReference(
                           b.identifier("Type"),
                           b.tsTypeParameterInstantiation([
-                            b.tsTypeReference(
-                              b.identifier(typeName),
-                            ),
-                          ]),
-                        ),
+                            b.tsTypeReference(b.identifier(typeName)),
+                          ])
+                        )
                       ),
-                    }),
+                    })
                   ),
-                ]),
-              ),
+                ])
+              )
             ),
-          ]),
+          ])
         )
       ),
       b.exportNamedDeclaration(
         b.tsInterfaceDeclaration(
           b.identifier("NamedTypes"),
           b.tsInterfaceBody(
-            Object.keys(n).map(typeName =>
+            Object.keys(n).map((typeName) =>
               b.tsPropertySignature(
                 b.identifier(typeName),
                 b.tsTypeAnnotation(
                   b.tsTypeReference(
                     b.identifier("Type"),
                     b.tsTypeParameterInstantiation([
-                      b.tsTypeReference(b.tsQualifiedName(
-                        b.identifier("namedTypes"),
-                        b.identifier(typeName),
-                      )),
+                      b.tsTypeReference(
+                        b.tsQualifiedName(
+                          b.identifier("namedTypes"),
+                          b.identifier(typeName)
+                        )
+                      ),
                     ])
                   )
                 )
@@ -192,11 +206,13 @@ const out = [
     ast: moduleWithBody([
       KINDS_IMPORT,
       NAMED_TYPES_IMPORT,
-      ...builderTypeNames.map(typeName => {
+      ...builderTypeNames.map((typeName) => {
         const typeDef = Type.def(typeName);
 
         const returnType = b.tsTypeAnnotation(
-          b.tsTypeReference(b.tsQualifiedName(NAMED_TYPES_ID, b.identifier(typeName)))
+          b.tsTypeReference(
+            b.tsQualifiedName(NAMED_TYPES_ID, b.identifier(typeName))
+          )
         );
 
         const buildParamAllowsUndefined: { [buildParam: string]: boolean } = {};
@@ -222,16 +238,21 @@ const out = [
             b.tsInterfaceBody([
               b.tsCallSignatureDeclaration(
                 typeDef.buildParams
-                  .filter(buildParam => !!typeDef.allFields[buildParam])
-                  .map(buildParam => {
+                  .filter((buildParam) => !!typeDef.allFields[buildParam])
+                  .map((buildParam) => {
                     const field = typeDef.allFields[buildParam];
-                    const name = RESERVED_WORDS[buildParam] ? `${buildParam}Param` : buildParam;
+                    const name = RESERVED_WORDS[buildParam]
+                      ? `${buildParam}Param`
+                      : buildParam;
 
                     return b.identifier.from({
                       name,
                       typeAnnotation: b.tsTypeAnnotation(
                         !!buildParamAllowsUndefined[buildParam]
-                          ? b.tsUnionType([getTSTypeAnnotation(field.type), b.tsUndefinedKeyword()])
+                          ? b.tsUnionType([
+                              getTSTypeAnnotation(field.type),
+                              b.tsUndefinedKeyword(),
+                            ])
                           : getTSTypeAnnotation(field.type)
                       ),
                       optional: !!buildParamIsOptional[buildParam],
@@ -247,13 +268,15 @@ const out = [
                     typeAnnotation: b.tsTypeAnnotation(
                       b.tsTypeLiteral(
                         Object.keys(typeDef.allFields)
-                          .filter(fieldName => fieldName !== "type")
+                          .filter((fieldName) => fieldName !== "type")
                           .sort() // Sort field name strings lexicographically.
-                          .map(fieldName => {
+                          .map((fieldName) => {
                             const field = typeDef.allFields[fieldName];
                             return b.tsPropertySignature(
                               b.identifier(field.name),
-                              b.tsTypeAnnotation(getTSTypeAnnotation(field.type)),
+                              b.tsTypeAnnotation(
+                                getTSTypeAnnotation(field.type)
+                              ),
                               field.defaultFn != null || field.hidden
                             );
                           })
@@ -272,10 +295,12 @@ const out = [
         b.tsInterfaceDeclaration(
           b.identifier("builders"),
           b.tsInterfaceBody([
-            ...builderTypeNames.map(typeName =>
+            ...builderTypeNames.map((typeName) =>
               b.tsPropertySignature(
                 b.identifier(getBuilderName(typeName)),
-                b.tsTypeAnnotation(b.tsTypeReference(b.identifier(`${typeName}Builder`)))
+                b.tsTypeAnnotation(
+                  b.tsTypeReference(b.identifier(`${typeName}Builder`))
+                )
               )
             ),
             b.tsIndexSignature(
@@ -311,7 +336,7 @@ const out = [
             b.tsTypeParameter("M", undefined, b.tsTypeLiteral([])),
           ]),
           body: b.tsInterfaceBody([
-            ...Object.keys(n).map(typeName => {
+            ...Object.keys(n).map((typeName) => {
               return b.tsMethodSignature.from({
                 key: b.identifier(`visit${typeName}`),
                 parameters: [
@@ -330,7 +355,12 @@ const out = [
                       b.tsTypeReference(
                         b.identifier("NodePath"),
                         b.tsTypeParameterInstantiation([
-                          b.tsTypeReference(b.tsQualifiedName(NAMED_TYPES_ID, b.identifier(typeName))),
+                          b.tsTypeReference(
+                            b.tsQualifiedName(
+                              NAMED_TYPES_ID,
+                              b.identifier(typeName)
+                            )
+                          ),
                         ])
                       )
                     ),
@@ -356,16 +386,19 @@ out.forEach(({ file, ast }) => {
 
 function moduleWithBody(body: any[]) {
   return b.file.from({
-    comments: [b.commentBlock(" !!! THIS FILE WAS AUTO-GENERATED BY `npm run gen` !!! ")],
+    comments: [
+      b.commentBlock(" !!! THIS FILE WAS AUTO-GENERATED BY `npm run gen` !!! "),
+    ],
     program: b.program(body),
   });
 }
 
 function getSupertypeToSubtypes() {
   const supertypeToSubtypes: { [supertypeName: string]: string[] } = {};
-  Object.keys(n).map(typeName => {
-    Type.def(typeName).supertypeList.forEach(supertypeName => {
-      supertypeToSubtypes[supertypeName] = supertypeToSubtypes[supertypeName] || [];
+  Object.keys(n).map((typeName) => {
+    Type.def(typeName).supertypeList.forEach((supertypeName) => {
+      supertypeToSubtypes[supertypeName] =
+        supertypeToSubtypes[supertypeName] || [];
       supertypeToSubtypes[supertypeName].push(typeName);
     });
   });
@@ -374,7 +407,7 @@ function getSupertypeToSubtypes() {
 }
 
 function getBuilderTypeNames() {
-  return Object.keys(n).filter(typeName => {
+  return Object.keys(n).filter((typeName) => {
     const typeDef = Type.def(typeName);
     const builderName = getBuilderName(typeName);
 
@@ -383,15 +416,17 @@ function getBuilderTypeNames() {
 }
 
 function getBuildableSubtypes(supertype: string): string[] {
-  return Array.from(new Set(
-    Object.keys(n).filter(typeName => {
-      const typeDef = Type.def(typeName);
-      return typeDef.allSupertypes[supertype] != null && typeDef.buildable;
-    })
-  ));
+  return Array.from(
+    new Set(
+      Object.keys(n).filter((typeName) => {
+        const typeDef = Type.def(typeName);
+        return typeDef.allSupertypes[supertype] != null && typeDef.buildable;
+      })
+    )
+  );
 }
 
-function getTSTypeAnnotation(type: import("../lib/types").Type<any>): any {
+function getTSTypeAnnotation(type: import("../lib/types.ts").Type<any>): any {
   switch (type.kind) {
     case "ArrayType": {
       const elemTypeAnnotation = getTSTypeAnnotation(type.elemType);
@@ -427,7 +462,7 @@ function getTSTypeAnnotation(type: import("../lib/types").Type<any>): any {
 
     case "ObjectType": {
       return b.tsTypeLiteral(
-        type.fields.map(field =>
+        type.fields.map((field) =>
           b.tsPropertySignature(
             b.identifier(field.name),
             b.tsTypeAnnotation(getTSTypeAnnotation(field.type))
@@ -437,7 +472,7 @@ function getTSTypeAnnotation(type: import("../lib/types").Type<any>): any {
     }
 
     case "OrType": {
-      return b.tsUnionType(type.types.map(type => getTSTypeAnnotation(type)));
+      return b.tsUnionType(type.types.map((type) => getTSTypeAnnotation(type)));
     }
 
     case "PredicateType": {
@@ -446,7 +481,9 @@ function getTSTypeAnnotation(type: import("../lib/types").Type<any>): any {
       }
 
       if (hasOwn.call(n, type.name)) {
-        return b.tsTypeReference(b.tsQualifiedName(KINDS_ID, b.identifier(`${type.name}Kind`)));
+        return b.tsTypeReference(
+          b.tsQualifiedName(KINDS_ID, b.identifier(`${type.name}Kind`))
+        );
       }
 
       if (/^[$A-Z_][a-z0-9_$]*$/i.test(type.name)) {

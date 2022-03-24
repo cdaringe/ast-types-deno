@@ -1,22 +1,25 @@
-import path from "path";
-import fs from "fs";
-import { parse as esprimaParse } from "esprima";
-import { parse as reifyBabylonParse } from "reify/lib/parsers/babylon";
-import { namedTypes as n } from "../main";
+import path from "path.ts";
+import fs from "fs.ts";
+import { parse as esprimaParse } from "esprima.ts";
+import { parse as reifyBabylonParse } from "reify/lib/parsers/babylon.ts";
+import { namedTypes as n } from "../main.ts";
 
 export function validateECMAScript(file: any) {
   var fullPath = path.join(__dirname, "..", file);
 
   it("should validate " + file + " with Esprima", function (done) {
-    fs.readFile(fullPath, "utf8", function(err, code) {
+    fs.readFile(fullPath, "utf8", function (err, code) {
       if (err) {
         throw err;
       }
 
       n.Program.assert(esprimaParse(code), true);
-      n.Program.assert(esprimaParse(code, {
-        loc: true
-      }), true);
+      n.Program.assert(
+        esprimaParse(code, {
+          loc: true,
+        }),
+        true
+      );
 
       done();
     });
@@ -32,7 +35,7 @@ export function validateECMAScript(file: any) {
       done();
     });
   });
-};
+}
 
 export function babylonParse(source: any, options?: any) {
   var ast = reifyBabylonParse(source, options);

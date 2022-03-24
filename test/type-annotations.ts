@@ -1,21 +1,25 @@
-import assert from "assert";
-import * as types from "../main";
+import assert from "assert.ts";
+import * as types from "../main.ts";
 
 describe("type annotations", function () {
   it("can build Identifier with Flow typeAnnotation", function () {
     assert.doesNotThrow(function () {
       types.builders.identifier.from({
         name: "x",
-        typeAnnotation: types.builders.typeAnnotation(types.builders.stringTypeAnnotation())
+        typeAnnotation: types.builders.typeAnnotation(
+          types.builders.stringTypeAnnotation()
+        ),
       });
-    })
+    });
   });
 
   it("can build Identifier with TS typeAnnotation", function () {
     assert.doesNotThrow(function () {
       types.builders.identifier.from({
         name: "x",
-        typeAnnotation: types.builders.tsTypeAnnotation(types.builders.tsStringKeyword())
+        typeAnnotation: types.builders.tsTypeAnnotation(
+          types.builders.tsStringKeyword()
+        ),
       });
     });
   });
@@ -30,7 +34,10 @@ describe("type annotations", function () {
           ),
         ],
         typeAnnotation: types.builders.typeAnnotation(
-          types.builders.genericTypeAnnotation(types.builders.identifier("SomeType"), null)
+          types.builders.genericTypeAnnotation(
+            types.builders.identifier("SomeType"),
+            null
+          )
         ),
       });
     });
@@ -47,7 +54,7 @@ describe("type annotations", function () {
         ],
         typeAnnotation: types.builders.tsTypeAnnotation(
           types.builders.tsTypeReference(types.builders.identifier("SomeType"))
-        )
+        ),
       });
     });
   });
@@ -58,12 +65,15 @@ describe("type annotations", function () {
         id: types.builders.identifier("someFunction"),
         params: [],
         typeParameters: types.builders.typeParameterDeclaration([
-          types.builders.typeParameter("T")
+          types.builders.typeParameter("T"),
         ]),
         returnType: types.builders.typeAnnotation(
-          types.builders.genericTypeAnnotation(types.builders.identifier("SomeType"), null)
+          types.builders.genericTypeAnnotation(
+            types.builders.identifier("SomeType"),
+            null
+          )
         ),
-        body: types.builders.blockStatement([])
+        body: types.builders.blockStatement([]),
       });
     });
   });
@@ -74,12 +84,12 @@ describe("type annotations", function () {
         id: types.builders.identifier("someFunction"),
         params: [],
         typeParameters: types.builders.tsTypeParameterDeclaration([
-          types.builders.tsTypeParameter("T")
+          types.builders.tsTypeParameter("T"),
         ]),
         returnType: types.builders.tsTypeAnnotation(
           types.builders.tsTypeReference(types.builders.identifier("SomeType"))
         ),
-        body: types.builders.blockStatement([])
+        body: types.builders.blockStatement([]),
       });
     });
   });
@@ -88,8 +98,10 @@ describe("type annotations", function () {
     assert.doesNotThrow(function () {
       types.builders.classProperty.from({
         key: types.builders.identifier("someClassProperty"),
-        typeAnnotation: types.builders.typeAnnotation(types.builders.stringTypeAnnotation()),
-        value: null
+        typeAnnotation: types.builders.typeAnnotation(
+          types.builders.stringTypeAnnotation()
+        ),
+        value: null,
       });
     });
   });
@@ -98,8 +110,10 @@ describe("type annotations", function () {
     assert.doesNotThrow(function () {
       types.builders.classProperty.from({
         key: types.builders.identifier("someClassProperty"),
-        typeAnnotation: types.builders.tsTypeAnnotation(types.builders.tsStringKeyword()),
-        value: null
+        typeAnnotation: types.builders.tsTypeAnnotation(
+          types.builders.tsStringKeyword()
+        ),
+        value: null,
       });
     });
   });
@@ -109,13 +123,16 @@ describe("type annotations", function () {
       types.builders.classDeclaration.from({
         id: types.builders.identifier("SomeClass"),
         typeParameters: types.builders.typeParameterDeclaration([
-          types.builders.typeParameter("T")
+          types.builders.typeParameter("T"),
         ]),
         superClass: types.builders.identifier("SomeSuperClass"),
         superTypeParameters: types.builders.typeParameterInstantiation([
-          types.builders.genericTypeAnnotation(types.builders.identifier("U"), null)
+          types.builders.genericTypeAnnotation(
+            types.builders.identifier("U"),
+            null
+          ),
         ]),
-        body: types.builders.classBody([])
+        body: types.builders.classBody([]),
       });
     });
   });
@@ -125,13 +142,13 @@ describe("type annotations", function () {
       types.builders.classDeclaration.from({
         id: types.builders.identifier("SomeClass"),
         typeParameters: types.builders.tsTypeParameterDeclaration([
-          types.builders.tsTypeParameter("T")
+          types.builders.tsTypeParameter("T"),
         ]),
         superClass: types.builders.identifier("SomeSuperClass"),
         superTypeParameters: types.builders.tsTypeParameterInstantiation([
-          types.builders.tsTypeReference(types.builders.identifier("U"))
+          types.builders.tsTypeReference(types.builders.identifier("U")),
         ]),
-        body: types.builders.classBody([])
+        body: types.builders.classBody([]),
       });
     });
   });
@@ -141,13 +158,16 @@ describe("type annotations", function () {
       types.builders.classExpression.from({
         id: types.builders.identifier("SomeClass"),
         typeParameters: types.builders.typeParameterDeclaration([
-          types.builders.typeParameter("T")
+          types.builders.typeParameter("T"),
         ]),
         superClass: types.builders.identifier("SomeSuperClass"),
         superTypeParameters: types.builders.typeParameterInstantiation([
-          types.builders.genericTypeAnnotation(types.builders.identifier("U"), null)
+          types.builders.genericTypeAnnotation(
+            types.builders.identifier("U"),
+            null
+          ),
         ]),
-        body: types.builders.classBody([])
+        body: types.builders.classBody([]),
       });
     });
   });
@@ -157,13 +177,13 @@ describe("type annotations", function () {
       types.builders.classExpression.from({
         id: types.builders.identifier("SomeClass"),
         typeParameters: types.builders.tsTypeParameterDeclaration([
-          types.builders.tsTypeParameter("T")
+          types.builders.tsTypeParameter("T"),
         ]),
         superClass: types.builders.identifier("SomeSuperClass"),
         superTypeParameters: types.builders.tsTypeParameterInstantiation([
-          types.builders.tsTypeReference(types.builders.identifier("U"))
+          types.builders.tsTypeReference(types.builders.identifier("U")),
         ]),
-        body: types.builders.classBody([])
+        body: types.builders.classBody([]),
       });
     });
   });
@@ -176,12 +196,17 @@ describe("type annotations", function () {
           types.builders.classImplements.from({
             id: types.builders.identifier("SomeInterface"),
             typeParameters: types.builders.typeParameterInstantiation([
-              types.builders.genericTypeAnnotation(types.builders.identifier("U"), null)
+              types.builders.genericTypeAnnotation(
+                types.builders.identifier("U"),
+                null
+              ),
             ]),
           }),
-          types.builders.classImplements(types.builders.identifier("SomeOtherInterface"))
+          types.builders.classImplements(
+            types.builders.identifier("SomeOtherInterface")
+          ),
         ],
-        body: types.builders.classBody([])
+        body: types.builders.classBody([]),
       });
     });
   });
@@ -194,14 +219,14 @@ describe("type annotations", function () {
           types.builders.tsExpressionWithTypeArguments.from({
             expression: types.builders.identifier("SomeInterface"),
             typeParameters: types.builders.tsTypeParameterInstantiation([
-              types.builders.tsTypeReference(types.builders.identifier("U"))
+              types.builders.tsTypeReference(types.builders.identifier("U")),
             ]),
           }),
           types.builders.tsExpressionWithTypeArguments(
             types.builders.identifier("SomeOtherInterface")
-          )
+          ),
         ],
-        body: types.builders.classBody([])
+        body: types.builders.classBody([]),
       });
     });
   });

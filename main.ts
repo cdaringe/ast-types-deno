@@ -1,22 +1,22 @@
-import fork from "./fork";
-import coreDef from "./def/core";
-import es6Def from "./def/es6";
-import es2016Def from "./def/es2016";
-import es2017Def from "./def/es2017";
-import es2018Def from "./def/es2018";
-import es2019Def from "./def/es2019";
-import es2020Def from "./def/es2020";
-import jsxDef from "./def/jsx";
-import flowDef from "./def/flow";
-import esprimaDef from "./def/esprima";
-import babelDef from "./def/babel";
-import typescriptDef from "./def/typescript";
-import esProposalsDef from "./def/es-proposals";
-import { ASTNode, Type, AnyType, Field } from "./lib/types";
-import { NodePath } from "./lib/node-path";
-import { namedTypes } from "./gen/namedTypes";
-import { builders } from "./gen/builders";
-import { Visitor } from "./gen/visitor";
+import fork from "./fork.ts";
+import coreDef from "./def/core.ts";
+import es6Def from "./def/es6.ts";
+import es2016Def from "./def/es2016.ts";
+import es2017Def from "./def/es2017.ts";
+import es2018Def from "./def/es2018.ts";
+import es2019Def from "./def/es2019.ts";
+import es2020Def from "./def/es2020.ts";
+import jsxDef from "./def/jsx.ts";
+import flowDef from "./def/flow.ts";
+import esprimaDef from "./def/esprima.ts";
+import babelDef from "./def/babel.ts";
+import typescriptDef from "./def/typescript.ts";
+import esProposalsDef from "./def/es-proposals.ts";
+import { ASTNode, Type, AnyType, Field } from "./lib/types.ts";
+import { NodePath } from "./lib/node-path.ts";
+import { namedTypes } from "./gen/namedTypes.ts";
+import { builders } from "./gen/builders.ts";
+import { Visitor } from "./gen/visitor.ts";
 
 const {
   astNodesAreEquivalent,
@@ -63,26 +63,51 @@ const {
 Object.assign(namedTypes, n);
 
 export {
-  AnyType,
-  ASTNode,
+  // AnyType,
+  // ASTNode,
   astNodesAreEquivalent,
   builders,
   builtInTypes,
   defineMethod,
   eachField,
-  Field,
+  // Field,
   finalize,
   getBuilderName,
   getFieldNames,
   getFieldValue,
   getSupertypeNames,
   namedTypes,
+  // NodePath,
+  // Path,
+  // PathVisitor,
+  someField,
+  // Type,
+  use,
+  visit,
+  // Visitor,
+};
+
+export type {
+  AnyType,
+  ASTNode,
+  // astNodesAreEquivalent,
+  // builders,
+  // builtInTypes,
+  // defineMethod,
+  // eachField,
+  Field,
+  // finalize,
+  // getBuilderName,
+  // getFieldNames,
+  // getFieldValue,
+  // getSupertypeNames,
+  // namedTypes,
   NodePath,
   Path,
   PathVisitor,
-  someField,
+  // someField,
   Type,
-  use,
-  visit,
+  // use,
+  // visit,
   Visitor,
 };

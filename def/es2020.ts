@@ -1,8 +1,8 @@
-import { Fork } from "../types";
-import { LogicalOperators } from "./core-operators";
-import es2019Def from "./es2019";
-import typesPlugin from "../lib/types";
-import sharedPlugin from "../lib/shared";
+import { Fork } from "../types.ts";
+import { LogicalOperators } from "./core-operators.ts";
+import es2019Def from "./es2019.ts";
+import typesPlugin from "../lib/types.ts";
+import sharedPlugin from "../lib/shared.ts";
 
 export default function (fork: Fork) {
   fork.use(es2019Def);
@@ -29,11 +29,9 @@ export default function (fork: Fork) {
     .bases("Node")
     .field("optional", Boolean, defaults["false"]);
 
-  def("CallExpression")
-    .bases("Expression", "ChainElement");
+  def("CallExpression").bases("Expression", "ChainElement");
 
-  def("MemberExpression")
-    .bases("Expression", "ChainElement");
+  def("MemberExpression").bases("Expression", "ChainElement");
 
   def("ChainExpression")
     .bases("Expression")
@@ -54,6 +52,5 @@ export default function (fork: Fork) {
   // Nullish coalescing
   const LogicalOperator = or(...LogicalOperators, "??");
 
-  def("LogicalExpression")
-    .field("operator", LogicalOperator)
-};
+  def("LogicalExpression").field("operator", LogicalOperator);
+}
